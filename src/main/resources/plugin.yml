@@ -1,0 +1,27 @@
+main: com.cavetale.pictionary.PictionaryPlugin
+
+name: Pictionary
+version: 0.1
+description: Pictionary Plugin
+api-version: 1.13
+
+author: StarTux
+website: https://github.com/StarTux/Pictionary
+
+depend: [WorldEdit, Sidebar]
+softdepend: []
+
+commands:
+
+  pictionary:
+    aliases: []
+    description: Pictionary Command
+    permission: pictionary.pictionary
+    usage: |-
+      /pictionary
+
+permissions:
+
+  pictionary.pictionary:
+    description: Use /pictionary
+    default: op
