@@ -1,6 +1,7 @@
 package com.cavetale.pictionary;
 
 import java.util.UUID;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public final class User {
@@ -15,5 +16,9 @@ public final class User {
 
     public User(final Player player) {
         this(player.getUniqueId(), player.getName());
+    }
+
+    public Player getPlayer() {
+        return Bukkit.getPlayer(uuid);
     }
 }

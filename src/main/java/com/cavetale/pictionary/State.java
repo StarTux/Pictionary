@@ -2,37 +2,60 @@ package com.cavetale.pictionary;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BlockIterator;
+import org.bukkit.util.Vector;
 
 public final class State {
     String worldName = "";
     Cuboid canvas = Cuboid.ZERO;
     Map<UUID, User> users = new HashMap<>();
+    Set<UUID> guessedRight = new HashSet<>();
+    List<UUID> playOrder = new ArrayList<>();
     Phase phase = Phase.IDLE;
     int playTicks = 0;
+    int endTicks = 0;
     String secretPhrase = "";
     String publicPhrase = "";
     UUID drawerUuid = null;
+    long lastDrawTime = 0;
+    Vec3i lastDrawBlock = null;
+    int totalTimeInTicks;
+    int ticksLeft;
+    int guessPoints = 3;
+    transient BossBar bossBar;
+    public static final int TICKS_PER_LETTER = 600;
+    public static final int TICKS_PER_REVEAL = 800;
+    transient List<String> wordList = Arrays
+        .asList("Strawberry", "Eclipse", "Chandelier", "Ketchup", "Toothpaste", "Rainbow", "Bunk bed", "Boardgame", "Beehive", "Lemon", "Wreath", "Waffles", "Bubble", "Whistle", "Snowball", "Bouquet", "Headphones", "Fireworks", "Igloo", "Ferris wheel", "Banana peel", "Lawnmower", "Summer", "Whisk", "Cupcake", "Sleeping bag", "Bruise", "Fog", "Crust", "Battery", "Giraffe", "Koala", "Wasp", "Scorpion", "Lion", "Salamander", "Dolphin", "Frog", "Panda", "Platypus", "T-rex", "Meerkat", "Eagle", "Mailman", "Superman", "Justin Beiber", "Cowboy ", "Alexander Hamilton", "Robin Hood", "Vampire", "Pirate", "Girl Scout", "Pikachu", "Spongebob", "Baby Yoda", "Pilgrim", "Cinderella", "Baker", "Abe Lincoln", "Thief", "Leprechaun", "Harry Potter", "Shrek", "Yoshi", "Queen Elizabeth", "Skip", "Burp", "Cook", "Scratch", "Sleep", "Plant", "Purchase", "Text", "Tie", "Snore", "Catch", "Study", "Olympics", "Sandcastle", "Recycle", "Black hole", "Applause", "Blizzard", "Sunburn", "Time machine", "Lace", "Monday", "Atlantis", "Swamp", "Panama Canal", "Sunscreen", "Dictionary", "Vanilla", "Century");
 
     public enum Phase {
         IDLE,
-        PLAY;
+        PLAY,
+        END;
     }
 
     public User userOf(Player player) {
@@ -57,16 +80,17 @@ public final class State {
     }
 
     void tick() {
+        if (getWorld() == null) return;
         switch (phase) {
         case IDLE: return;
         case PLAY: tickPlay(); break;
+        case END: tickEnd(); break;
         default: break;
         }
     }
 
     void tickPlay() {
-        playTicks += 1;
-        if (playTicks % 800 == 0) {
+        if (playTicks > 0 && playTicks % TICKS_PER_REVEAL == 0) {
             solveOneLetter();
         }
         if (playTicks % 10 == 0) {
@@ -75,11 +99,65 @@ public final class State {
                 drawer.sendActionBar(ChatColor.GREEN + "Secret: " + ChatColor.WHITE + secretPhrase);
             }
         }
-        Player drawer = getDrawer();
-        if (drawer != null) {
-            if (!drawer.isFlying() && drawer.isSneaking()) {
-                draw(drawer, false);
+        if (ticksLeft <= 0) {
+            for (Player target : getWorld().getPlayers()) {
+                target.sendMessage(ChatColor.RED + "Time's up! The word was: " + secretPhrase);
             }
+            endGame();
+            return;
+        }
+        int notGuessed = 0;
+        for (Player player : getEligiblePlayers()) {
+            if (!isDrawer(player) && !guessedRight.contains(player.getUniqueId())) notGuessed += 1;
+        }
+        if (notGuessed == 0) {
+            for (Player target : getWorld().getPlayers()) {
+                target.sendMessage(ChatColor.RED + "Everybody guessed the word: " + secretPhrase);
+                target.playSound(target.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.MASTER, 0.2f, 2.0f);
+            }
+            endGame();
+            return;
+        }
+        if (bossBar == null) {
+            bossBar = Bukkit.createBossBar(ChatColor.WHITE + publicPhrase, BarColor.PURPLE, BarStyle.SOLID);
+        } else {
+            bossBar.setTitle(ChatColor.WHITE + publicPhrase);
+        }
+        if (totalTimeInTicks > 0) {
+            bossBar.setProgress((double) ticksLeft / (double) totalTimeInTicks);
+        }
+        for (Player player : getWorld().getPlayers()) {
+            bossBar.addPlayer(player);
+        }
+        for (Player player : bossBar.getPlayers()) {
+            if (!player.isValid() || !player.getWorld().equals(getWorld())) {
+                bossBar.removePlayer(player);
+            }
+        }
+        ticksLeft -= 1;
+        playTicks += 1;
+    }
+
+    void tickEnd() {
+        endTicks += 1;
+        if (endTicks >= 400) {
+            startNewGame();
+            return;
+        }
+    }
+
+    void startNewGame() {
+        if (playOrder.isEmpty()) {
+            playOrder.addAll(getEligiblePlayers().stream().map(Player::getUniqueId).collect(Collectors.toList()));
+            Collections.shuffle(playOrder);
+        }
+        while (true) {
+            if (playOrder.isEmpty()) return;
+            UUID uuid = playOrder.remove(0);
+            Player player = Bukkit.getPlayer(uuid);
+            if (player == null || !isEligible(player)) continue;
+            startGame(player);
+            return;
         }
     }
 
@@ -105,6 +183,12 @@ public final class State {
         return player.getUniqueId().equals(drawerUuid);
     }
 
+    void startGame(Player player) {
+        Random random = ThreadLocalRandom.current();
+        String word = wordList.get(random.nextInt(wordList.size()));
+        startGame(player, word);
+    }
+
     void startGame(Player drawer, String phrase) {
         userOf(drawer); // create
         drawerUuid = drawer.getUniqueId();
@@ -119,6 +203,12 @@ public final class State {
             target.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 0.2f, 2.0f);
         }
         clearCanvas();
+        lastDrawBlock = null;
+        lastDrawTime = 0L;
+        totalTimeInTicks = phrase.length() * TICKS_PER_LETTER;
+        ticksLeft = totalTimeInTicks;
+        guessedRight.clear();
+        guessPoints = 3;
     }
 
     public Player getDrawer() {
@@ -127,7 +217,13 @@ public final class State {
     }
 
     public void endGame() {
-        phase = Phase.IDLE;
+        phase = Phase.END;
+        endTicks = 0;
+        publicPhrase = secretPhrase;
+    }
+
+    public void cleanUp() {
+        if (bossBar != null) bossBar.removeAll();
     }
 
     public void clearCanvas() {
@@ -163,14 +259,66 @@ public final class State {
         } catch (IllegalArgumentException iae) {
             return;
         }
-        block.setType(to);
+        long now = System.currentTimeMillis();
+        long diff = (now - lastDrawTime);
+        if (diff < 400L && lastDrawBlock != null) {
+            Vector dir = new Vector(lastDrawBlock.x - block.getX(),
+                                    lastDrawBlock.y - block.getY(),
+                                    lastDrawBlock.z - block.getZ());
+            int length = (int) Math.ceil(dir.length());
+            if (length == 0) dir = new Vector(0, 1, 0);
+            BlockIterator iter = new BlockIterator(getWorld(), block.getLocation().add(0.5, 0.5, 0.5).toVector(), dir, 0.0, length);
+            for (int i = 0; i <= length; i += 1) {
+                if (!iter.hasNext()) break;
+                Block next = iter.next();
+                draw(player, next, to, thick);
+            }
+        } else {
+            draw(player, block, to, thick);
+        }
+        lastDrawTime = now;
+        lastDrawBlock = Vec3i.of(block);
+    }
+
+    void draw(Player player, Block block, Material mat, boolean thick) {
+        if (!canvas.contains(block)) return;
+        block.setType(mat);
         if (thick) {
             for (BlockFace face : Arrays.asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST, BlockFace.UP, BlockFace.DOWN)) {
                 Block b = block.getRelative(face);
                 if (canvas.contains(b)) {
-                    b.setType(to);
+                    b.setType(mat);
                 }
             }
         }
+    }
+
+    public boolean onGuess(PictionaryPlugin plugin, Player player, String msg) {
+        if (!isIn(player.getWorld())) return false;
+        if (phase != State.Phase.PLAY) return false;
+        if (isDrawer(player)) return false;
+        if (!msg.equalsIgnoreCase(secretPhrase)) return false;
+        // Guessed right!
+        if (guessedRight.contains(player.getUniqueId())) return true;
+        guessedRight.add(player.getUniqueId());
+        plugin.getLogger().info("Guessed right: " + player.getName());
+        userOf(player).score += guessPoints;
+        if (guessPoints > 1) guessPoints -= 1;
+        userOf(drawerUuid).score += 1;
+        for (Player target : getWorld().getPlayers()) {
+            target.sendMessage(ChatColor.GREEN + player.getName() + " guessed the phrase!");
+            target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
+        }
+        return true;
+    }
+
+    List<Player> getEligiblePlayers() {
+        return getWorld().getPlayers().stream()
+            .filter(p -> p.getGameMode() != GameMode.SPECTATOR)
+            .collect(Collectors.toList());
+    }
+
+    boolean isEligible(Player player) {
+        return player.isValid() && player.getWorld().equals(getWorld()) && player.getGameMode() != GameMode.SPECTATOR;
     }
 }

@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.ChatColor;
-import org.bukkit.Sound;
-import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -47,15 +45,6 @@ public final class EventListener implements Listener {
         Player player = event.getPlayer();
         if (!plugin.state.isIn(player.getWorld())) return;
         List<String> list = new ArrayList<>();
-        if (plugin.state.phase == State.Phase.PLAY) {
-            list.add("" + ChatColor.RED + ChatColor.BOLD + "vvvvvvvvvvvv");
-            list.add(ChatColor.WHITE + " " + plugin.state.publicPhrase);
-            list.add("" + ChatColor.RED + ChatColor.BOLD + "^^^^^^^^^^^^");
-        } else {
-            list.add("" + ChatColor.DARK_GRAY + ChatColor.BOLD + "vvvvvvvvvvvv");
-            list.add(ChatColor.WHITE + " " + plugin.state.secretPhrase);
-            list.add("" + ChatColor.DARK_GRAY + ChatColor.BOLD + "^^^^^^^^^^^^");
-        }
         Player drawer = plugin.state.getDrawer();
         if (drawer != null) {
             list.add(ChatColor.GRAY + "Artist " + ChatColor.WHITE + drawer.getName());
@@ -64,10 +53,19 @@ public final class EventListener implements Listener {
         List<User> users = plugin.state.rankScore();
         int i = 0;
         for (User user : users) {
+            Player other = user.getPlayer();
             int rank = ++i;
-            if (i > 5) break;
+            if (i > 13) break;
             if (user.score == 0) break;
-            list.add(ChatColor.RED + "#" + rank + ChatColor.WHITE + " " + user.score + " " + ChatColor.GRAY + user.name);
+            if (user.uuid.equals(plugin.state.drawerUuid)) {
+                list.add(ChatColor.RED + "#" + rank + ChatColor.WHITE + " " + user.score + " " + ChatColor.BLUE + user.name);
+            } else if (plugin.state.guessedRight.contains(user.uuid)) {
+                list.add(ChatColor.RED + "#" + rank + ChatColor.WHITE + " " + user.score + " " + ChatColor.GOLD + user.name);
+            } else if (other != null && plugin.state.isEligible(other)) {
+                list.add(ChatColor.RED + "#" + rank + ChatColor.WHITE + " " + user.score + " " + ChatColor.GRAY + user.name);
+            } else {
+                list.add(ChatColor.RED + "#" + rank + ChatColor.DARK_GRAY + " " + user.score + " " + user.name);
+            }
         }
         event.addLines(plugin, Priority.HIGHEST, list);
     }
@@ -78,29 +76,19 @@ public final class EventListener implements Listener {
         if (!msg.contains(" ")) return;
         msg = msg.split(" ", 2)[1];
         Player player = event.getPlayer();
-        onGuess(player, msg);
+        if (plugin.state.onGuess(plugin, player, msg)) {
+            event.setMessage(plugin.state.publicPhrase.replace("_", "*"));
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
     public void onPlayerChat(PlayerChatEvent event) {
         String msg = event.getMessage();
         Player player = event.getPlayer();
-        onGuess(player, msg);
-    }
-
-    void onGuess(Player player, String msg) {
-        if (!plugin.state.isIn(player.getWorld())) return;
-        if (plugin.state.phase != State.Phase.PLAY) return;
-        if (plugin.state.isDrawer(player)) return;
-        if (!msg.equalsIgnoreCase(plugin.state.secretPhrase)) return;
-        plugin.getLogger().info("Winner: " + player.getName());
-        plugin.state.userOf(player).score += 1;
-        plugin.state.userOf(plugin.state.drawerUuid).score += 1;
-        for (Player target : plugin.state.getWorld().getPlayers()) {
-            target.sendMessage(ChatColor.GREEN + player.getName() + " guessed the phrase: " + plugin.state.secretPhrase);
-            target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.5f, 2.0f);
+        if (plugin.state.onGuess(plugin, player, msg)) {
+            event.setMessage(plugin.state.publicPhrase.replace("_", "*"));
+            event.setCancelled(true);
         }
-        plugin.state.endGame();
-        plugin.save();
     }
 }

@@ -21,6 +21,7 @@ public final class PictionaryPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        state.cleanUp();
         save();
     }
 

@@ -35,6 +35,9 @@ public final class PictionaryCommand implements TabExecutor {
         root.addChild("scores")
             .caller(this::scores)
             .description("List scores");
+        root.addChild("debug")
+            .caller(this::debug)
+            .description("Debug");
         plugin.getCommand("pictionary").setExecutor(this);
     }
 
@@ -65,6 +68,11 @@ public final class PictionaryCommand implements TabExecutor {
     }
 
     boolean start(CommandContext context, CommandNode node, String[] args) {
+        if (args.length == 0) {
+            plugin.state.startNewGame();
+            context.message("Game started!");
+            return true;
+        }
         if (args.length < 2) return false;
         Player drawer = plugin.getServer().getPlayerExact(args[0]);
         if (drawer == null) throw new CommandWarn("Player not found: " + args[0]);
@@ -93,6 +101,11 @@ public final class PictionaryCommand implements TabExecutor {
         if (args.length != 0) return false;
         plugin.state.users.clear();
         context.message("All scores cleared");
+        return true;
+    }
+
+    boolean debug(CommandContext context, CommandNode node, String[] args) {
+        context.message(Json.serialize(plugin.state));
         return true;
     }
 }
