@@ -99,24 +99,26 @@ public final class State {
                 drawer.sendActionBar(ChatColor.GREEN + "Secret: " + ChatColor.WHITE + secretPhrase);
             }
         }
-        if (ticksLeft <= 0) {
+        if (ticksLeft <= 0 || getDrawer() == null) {
             for (Player target : getWorld().getPlayers()) {
                 target.sendMessage(ChatColor.RED + "Time's up! The word was: " + secretPhrase);
             }
             endGame();
             return;
         }
-        int notGuessed = 0;
-        for (Player player : getEligiblePlayers()) {
-            if (!isDrawer(player) && !guessedRight.contains(player.getUniqueId())) notGuessed += 1;
-        }
-        if (notGuessed == 0) {
-            for (Player target : getWorld().getPlayers()) {
-                target.sendMessage(ChatColor.RED + "Everybody guessed the word: " + secretPhrase);
-                target.playSound(target.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.MASTER, 0.2f, 2.0f);
+        if (!guessedRight.isEmpty()) {
+            int notGuessed = 0;
+            for (Player player : getEligiblePlayers()) {
+                if (!isDrawer(player) && !guessedRight.contains(player.getUniqueId())) notGuessed += 1;
             }
-            endGame();
-            return;
+            if (notGuessed == 0) {
+                for (Player target : getWorld().getPlayers()) {
+                    target.sendMessage(ChatColor.RED + "Everybody guessed the word: " + secretPhrase);
+                    target.playSound(target.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.MASTER, 0.2f, 2.0f);
+                }
+                endGame();
+                return;
+            }
         }
         if (bossBar == null) {
             bossBar = Bukkit.createBossBar(ChatColor.WHITE + publicPhrase, BarColor.PURPLE, BarStyle.SOLID);
@@ -304,7 +306,7 @@ public final class State {
         plugin.getLogger().info("Guessed right: " + player.getName());
         userOf(player).score += guessPoints;
         if (guessPoints > 1) guessPoints -= 1;
-        userOf(drawerUuid).score += 1;
+        userOf(getDrawer()).score += 1;
         for (Player target : getWorld().getPlayers()) {
             target.sendMessage(ChatColor.GREEN + player.getName() + " guessed the phrase!");
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
