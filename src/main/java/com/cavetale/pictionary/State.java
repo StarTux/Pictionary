@@ -199,9 +199,10 @@ public final class State {
         secretPhrase = phrase;
         publicPhrase = phrase.replaceAll("[^ ]", "_");
         for (Player target : getWorld().getPlayers()) {
-            target.sendTitle(ChatColor.GREEN + "Start",
-                             ChatColor.GREEN + drawer.getName() + " is on");
-            target.sendMessage(ChatColor.GREEN + "Start! " + drawer.getName() + " is on");
+            target.sendTitle(ChatColor.GREEN + drawer.getName(),
+                             ChatColor.GREEN + "It's your turn!",
+                             0, 20, 0);
+            target.sendMessage(ChatColor.GREEN + "It's " + drawer.getName() + "'s turn!");
             target.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 0.2f, 2.0f);
         }
         clearCanvas();
