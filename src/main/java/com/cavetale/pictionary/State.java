@@ -112,7 +112,7 @@ public final class State {
             }
             if (notGuessed == 0) {
                 for (Player target : getWorld().getPlayers()) {
-                    target.sendMessage(ChatColor.RED + "Everybody guessed the word: " + secretPhrase);
+                    target.sendMessage(ChatColor.GREEN + "Everybody guessed the word: " + secretPhrase);
                     target.playSound(target.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.MASTER, 0.2f, 2.0f);
                 }
                 endGame();
@@ -169,9 +169,9 @@ public final class State {
         for (int i = 0; i < publicPhrase.length(); i += 1) {
             char c = publicPhrase.charAt(i);
             if (c != '_') continue;
-            if (found > 0 && random.nextInt(found) != 0) continue;
-            index = i;
             found += 1;
+            if (random.nextInt(found) != 0) continue;
+            index = i;
         }
         if (index >= 0) {
             char[] chars = publicPhrase.toCharArray();
@@ -319,7 +319,6 @@ public final class State {
         if (guessPoints > 1) guessPoints -= 1;
         Player drawer = getDrawer();
         userOf(drawer).score += 1;
-        plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "ml add " + drawer.getName());
         for (Player target : getWorld().getPlayers()) {
             target.sendMessage(ChatColor.GREEN + player.getName() + " guessed the phrase!");
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
