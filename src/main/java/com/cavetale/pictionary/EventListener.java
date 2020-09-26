@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
@@ -74,21 +74,20 @@ public final class EventListener implements Listener {
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
         String msg = event.getMessage();
         if (!msg.contains(" ")) return;
-        msg = msg.split(" ", 2)[1];
+        String[] toks = msg.split(" ", 2);
+        msg = toks[1];
         Player player = event.getPlayer();
         if (plugin.state.onGuess(plugin, player, msg)) {
-            event.setMessage(plugin.state.publicPhrase.replace("_", "*"));
-            event.setCancelled(true);
+            event.setMessage(toks[0] + " " + plugin.state.publicPhrase.replace("_", "*"));
         }
     }
 
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
-    public void onPlayerChat(PlayerChatEvent event) {
+    public void onAsyncPlayerChat(AsyncPlayerChatEvent event) {
         String msg = event.getMessage();
         Player player = event.getPlayer();
         if (plugin.state.onGuess(plugin, player, msg)) {
             event.setMessage(plugin.state.publicPhrase.replace("_", "*"));
-            event.setCancelled(true);
         }
     }
 }

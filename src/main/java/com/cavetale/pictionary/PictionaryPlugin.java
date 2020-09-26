@@ -1,9 +1,15 @@
 package com.cavetale.pictionary;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class PictionaryPlugin extends JavaPlugin {
+    static PictionaryPlugin instance;
     private PictionaryCommand pictionaryCommand = new PictionaryCommand(this);
     private EventListener eventListener = new EventListener(this);
     State state; // loaded onEnable
@@ -11,6 +17,7 @@ public final class PictionaryPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        instance = this;
         getDataFolder().mkdirs();
         saveFile = new File(getDataFolder(), "state.json");
         pictionaryCommand.enable();
@@ -35,5 +42,24 @@ public final class PictionaryPlugin extends JavaPlugin {
 
     void tick() {
         state.tick();
+    }
+
+    public List<String> getWordList() {
+        File dir = new File(getDataFolder(), "words");
+        List<String> list = new ArrayList<>();
+        for (File file : dir.listFiles()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                while (true) {
+                    String line = br.readLine();
+                    if (line == null) break;
+                    line = line.trim();
+                    if (line.isEmpty()) continue;
+                    list.add(line);
+                }
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        }
+        return list;
     }
 }

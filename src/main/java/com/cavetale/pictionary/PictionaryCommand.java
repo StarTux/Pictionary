@@ -38,6 +38,15 @@ public final class PictionaryCommand implements TabExecutor {
         root.addChild("debug")
             .caller(this::debug)
             .description("Debug");
+        root.addChild("clearwordlist")
+            .caller(this::clearWordList)
+            .description("Clear word list");
+        root.addChild("save")
+            .caller(this::save)
+            .description("Save to disk");
+        root.addChild("reload")
+            .caller(this::reload)
+            .description("Reload from disk");
         plugin.getCommand("pictionary").setExecutor(this);
     }
 
@@ -106,6 +115,24 @@ public final class PictionaryCommand implements TabExecutor {
 
     boolean debug(CommandContext context, CommandNode node, String[] args) {
         context.message(Json.serialize(plugin.state));
+        return true;
+    }
+
+    boolean clearWordList(CommandContext context, CommandNode node, String[] args) {
+        plugin.state.wordList.clear();
+        context.message("Word list cleared!");
+        return true;
+    }
+
+    boolean save(CommandContext context, CommandNode node, String[] args) {
+        plugin.save();
+        context.message("Saved to disk");
+        return true;
+    }
+
+    boolean reload(CommandContext context, CommandNode node, String[] args) {
+        plugin.load();
+        context.message("Reloaded from disk");
         return true;
     }
 }

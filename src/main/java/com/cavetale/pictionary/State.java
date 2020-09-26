@@ -46,11 +46,10 @@ public final class State {
     int totalTimeInTicks;
     int ticksLeft;
     int guessPoints = 3;
+    List<String> wordList = new ArrayList();
     transient BossBar bossBar;
     public static final int TICKS_PER_LETTER = 600;
     public static final int TICKS_PER_REVEAL = 800;
-    transient List<String> wordList = Arrays
-        .asList("Strawberry", "Eclipse", "Chandelier", "Ketchup", "Toothpaste", "Rainbow", "Bunk bed", "Boardgame", "Beehive", "Lemon", "Wreath", "Waffles", "Bubble", "Whistle", "Snowball", "Bouquet", "Headphones", "Fireworks", "Igloo", "Ferris wheel", "Banana peel", "Lawnmower", "Summer", "Whisk", "Cupcake", "Sleeping bag", "Bruise", "Fog", "Crust", "Battery", "Giraffe", "Koala", "Wasp", "Scorpion", "Lion", "Salamander", "Dolphin", "Frog", "Panda", "Platypus", "T-rex", "Meerkat", "Eagle", "Mailman", "Superman", "Justin Beiber", "Cowboy ", "Alexander Hamilton", "Robin Hood", "Vampire", "Pirate", "Girl Scout", "Pikachu", "Spongebob", "Baby Yoda", "Pilgrim", "Cinderella", "Baker", "Abe Lincoln", "Thief", "Leprechaun", "Harry Potter", "Shrek", "Yoshi", "Queen Elizabeth", "Skip", "Burp", "Cook", "Scratch", "Sleep", "Plant", "Purchase", "Text", "Tie", "Snore", "Catch", "Study", "Olympics", "Sandcastle", "Recycle", "Black hole", "Applause", "Blizzard", "Sunburn", "Time machine", "Lace", "Monday", "Atlantis", "Swamp", "Panama Canal", "Sunscreen", "Dictionary", "Vanilla", "Century");
 
     public enum Phase {
         IDLE,
@@ -187,7 +186,11 @@ public final class State {
 
     void startGame(Player player) {
         Random random = ThreadLocalRandom.current();
-        String word = wordList.get(random.nextInt(wordList.size()));
+        if (wordList.isEmpty()) {
+            wordList = PictionaryPlugin.instance.getWordList();
+            Collections.shuffle(wordList);
+        }
+        String word = wordList.remove(0);
         startGame(player, word);
     }
 
@@ -296,23 +299,31 @@ public final class State {
         }
     }
 
+    // Maybe called async
     public boolean onGuess(PictionaryPlugin plugin, Player player, String msg) {
-        if (!isIn(player.getWorld())) return false;
-        if (phase != State.Phase.PLAY) return false;
-        if (isDrawer(player)) return false;
         if (!msg.equalsIgnoreCase(secretPhrase)) return false;
+        plugin.getServer().getScheduler().runTask(plugin, () -> guessCallback(plugin, player, msg));
+        return true;
+    }
+
+    void guessCallback(PictionaryPlugin plugin, Player player, String msg) {
+        if (!msg.equalsIgnoreCase(secretPhrase)) return;
+        if (!isIn(player.getWorld())) return;
+        if (phase != State.Phase.PLAY) return;
+        if (isDrawer(player)) return;
         // Guessed right!
-        if (guessedRight.contains(player.getUniqueId())) return true;
+        if (guessedRight.contains(player.getUniqueId())) return;
         guessedRight.add(player.getUniqueId());
         plugin.getLogger().info("Guessed right: " + player.getName());
         userOf(player).score += guessPoints;
         if (guessPoints > 1) guessPoints -= 1;
-        userOf(getDrawer()).score += 1;
+        Player drawer = getDrawer();
+        userOf(drawer).score += 1;
+        plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "ml add " + drawer.getName());
         for (Player target : getWorld().getPlayers()) {
             target.sendMessage(ChatColor.GREEN + player.getName() + " guessed the phrase!");
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
         }
-        return true;
     }
 
     List<Player> getEligiblePlayers() {
