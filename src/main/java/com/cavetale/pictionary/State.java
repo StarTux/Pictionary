@@ -48,8 +48,8 @@ public final class State {
     int guessPoints = 3;
     List<String> wordList = new ArrayList();
     transient BossBar bossBar;
-    public static final int TICKS_PER_LETTER = 600;
-    public static final int TICKS_PER_REVEAL = 800;
+    public static final int TICKS_PER_LETTER = 400;
+    private int ticksPerReveal = 500;
 
     public enum Phase {
         IDLE,
@@ -89,7 +89,7 @@ public final class State {
     }
 
     void tickPlay() {
-        if (playTicks > 0 && playTicks % TICKS_PER_REVEAL == 0) {
+        if (playTicks > 0 && playTicks % ticksPerReveal == 0) {
             solveOneLetter();
         }
         if (playTicks % 10 == 0) {
@@ -211,7 +211,9 @@ public final class State {
         clearCanvas();
         lastDrawBlock = null;
         lastDrawTime = 0L;
-        totalTimeInTicks = phrase.length() * TICKS_PER_LETTER;
+        final int phraseLength = phrase.replace(" ", "").length();
+        totalTimeInTicks = Math.min(15, phraseLength) * TICKS_PER_LETTER;
+        ticksPerReveal = totalTimeInTicks / phraseLength;
         ticksLeft = totalTimeInTicks;
         guessedRight.clear();
         guessPoints = 3;
@@ -322,8 +324,6 @@ public final class State {
         if (guessPoints > 1) guessPoints -= 1;
         Player drawer = getDrawer();
         userOf(drawer).score += 1;
-        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "ml add " + drawer.getName());
-        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "titles unlockset " + drawer.getName() + " Pixel");
         for (Player target : getWorld().getPlayers()) {
             target.sendMessage(ChatColor.GREEN + player.getName() + " guessed the phrase!");
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
