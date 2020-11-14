@@ -219,7 +219,10 @@ public final class State {
 
     public Player getDrawer() {
         if (drawerUuid == null) return null;
-        return Bukkit.getPlayer(drawerUuid);
+        Player player = Bukkit.getPlayer(drawerUuid);
+        if (player == null) return null;
+        if (!player.getWorld().getName().equals(worldName)) return null;
+        return player;
     }
 
     public void endGame() {
@@ -319,6 +322,8 @@ public final class State {
         if (guessPoints > 1) guessPoints -= 1;
         Player drawer = getDrawer();
         userOf(drawer).score += 1;
+        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "ml add " + drawer.getName());
+        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "titles unlockset " + drawer.getName() + " Pixel");
         for (Player target : getWorld().getPlayers()) {
             target.sendMessage(ChatColor.GREEN + player.getName() + " guessed the phrase!");
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
