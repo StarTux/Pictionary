@@ -1,6 +1,5 @@
 package com.cavetale.pictionary;
 
-import com.cavetale.afk.AFKPlugin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -334,14 +333,10 @@ public final class State {
     List<Player> getEligiblePlayers() {
         return getWorld().getPlayers().stream()
             .filter(p -> p.getGameMode() != GameMode.SPECTATOR)
-            .filter(p -> !AFKPlugin.isAfk(p))
             .collect(Collectors.toList());
     }
 
     boolean isEligible(Player player) {
-        return player.isValid()
-            && player.getWorld().equals(getWorld())
-            && player.getGameMode() != GameMode.SPECTATOR
-            && !AFKPlugin.isAfk(player);
+        return player.isValid() && player.getWorld().equals(getWorld()) && player.getGameMode() != GameMode.SPECTATOR;
     }
 }
