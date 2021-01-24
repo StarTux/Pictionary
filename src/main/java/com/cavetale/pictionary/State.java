@@ -50,6 +50,7 @@ public final class State {
     transient BossBar bossBar;
     public static final int TICKS_PER_LETTER = 400;
     private int ticksPerReveal = 500;
+    boolean memberList;
 
     public enum Phase {
         IDLE,
@@ -327,6 +328,10 @@ public final class State {
         for (Player target : getWorld().getPlayers()) {
             target.sendMessage(ChatColor.GREEN + player.getName() + " guessed the phrase!");
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
+        }
+        if (memberList) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + drawer.getName());
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
         }
     }
 

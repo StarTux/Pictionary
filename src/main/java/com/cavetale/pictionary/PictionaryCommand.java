@@ -47,6 +47,9 @@ public final class PictionaryCommand implements TabExecutor {
         root.addChild("reload")
             .caller(this::reload)
             .description("Reload from disk");
+        root.addChild("memberlist")
+            .caller(this::memberlist)
+            .description("Toggle MemberList");
         plugin.getCommand("pictionary").setExecutor(this);
     }
 
@@ -133,6 +136,13 @@ public final class PictionaryCommand implements TabExecutor {
     boolean reload(CommandContext context, CommandNode node, String[] args) {
         plugin.load();
         context.message("Reloaded from disk");
+        return true;
+    }
+
+    boolean memberlist(CommandContext context, CommandNode node, String[] args) {
+        plugin.state.memberList = !plugin.state.memberList;
+        plugin.save();
+        context.message("Member list: " + plugin.state.memberList);
         return true;
     }
 }
