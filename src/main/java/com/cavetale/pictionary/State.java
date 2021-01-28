@@ -96,6 +96,11 @@ public final class State {
     }
 
     void tickPlay() {
+        if (bossBar == null) {
+            bossBar = Bukkit.createBossBar(ChatColor.WHITE + publicPhrase, BarColor.PURPLE, BarStyle.SOLID);
+        } else {
+            bossBar.setTitle(ChatColor.WHITE + publicPhrase);
+        }
         for (Player player : getWorld().getPlayers()) {
             bossBar.addPlayer(player);
         }
@@ -133,11 +138,6 @@ public final class State {
                 endGame();
                 return;
             }
-        }
-        if (bossBar == null) {
-            bossBar = Bukkit.createBossBar(ChatColor.WHITE + publicPhrase, BarColor.PURPLE, BarStyle.SOLID);
-        } else {
-            bossBar.setTitle(ChatColor.WHITE + publicPhrase);
         }
         if (totalTimeInTicks > 0) {
             bossBar.setProgress((double) ticksLeft / (double) totalTimeInTicks);
