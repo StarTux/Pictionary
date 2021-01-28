@@ -80,7 +80,13 @@ public final class State {
     }
 
     void tick() {
-        if (getWorld() == null) return;
+        if (getWorld() == null) {
+            if (bossBar != null) {
+                bossBar.removeAll();
+                bossBar = null;
+            }
+            return;
+        }
         switch (phase) {
         case IDLE: return;
         case PLAY: tickPlay(); break;
