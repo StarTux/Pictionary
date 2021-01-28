@@ -96,6 +96,14 @@ public final class State {
     }
 
     void tickPlay() {
+        for (Player player : getWorld().getPlayers()) {
+            bossBar.addPlayer(player);
+        }
+        for (Player player : bossBar.getPlayers()) {
+            if (!player.isValid() || !player.getWorld().equals(getWorld())) {
+                bossBar.removePlayer(player);
+            }
+        }
         if (playTicks > 0 && playTicks % ticksPerReveal == 0) {
             solveOneLetter();
         }
@@ -133,14 +141,6 @@ public final class State {
         }
         if (totalTimeInTicks > 0) {
             bossBar.setProgress((double) ticksLeft / (double) totalTimeInTicks);
-        }
-        for (Player player : getWorld().getPlayers()) {
-            bossBar.addPlayer(player);
-        }
-        for (Player player : bossBar.getPlayers()) {
-            if (!player.isValid() || !player.getWorld().equals(getWorld())) {
-                bossBar.removePlayer(player);
-            }
         }
         ticksLeft -= 1;
         playTicks += 1;
