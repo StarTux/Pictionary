@@ -26,6 +26,9 @@ public final class PictionaryCommand implements TabExecutor {
         root.addChild("start")
             .caller(this::start)
             .description("Start the game");
+        root.addChild("end")
+            .caller(this::end)
+            .description("End this round");
         root.addChild("stop")
             .caller(this::stop)
             .description("Stop the game");
@@ -47,9 +50,9 @@ public final class PictionaryCommand implements TabExecutor {
         root.addChild("reload")
             .caller(this::reload)
             .description("Reload from disk");
-        root.addChild("memberlist")
-            .caller(this::memberlist)
-            .description("Toggle MemberList");
+        root.addChild("event")
+            .caller(this::event)
+            .description("Toggle event mode");
         plugin.getCommand("pictionary").setExecutor(this);
     }
 
@@ -94,10 +97,18 @@ public final class PictionaryCommand implements TabExecutor {
         return true;
     }
 
-    boolean stop(CommandContext context, CommandNode node, String[] args) {
+    boolean end(CommandContext context, CommandNode node, String[] args) {
         if (args.length != 0) return false;
         plugin.state.endGame();
+        context.message("Round ended.");
+        return true;
+    }
+
+    boolean stop(CommandContext context, CommandNode node, String[] args) {
+        if (args.length != 0) return false;
+        plugin.state.stop();
         context.message("Game stopped.");
+        plugin.save();
         return true;
     }
 
@@ -139,10 +150,10 @@ public final class PictionaryCommand implements TabExecutor {
         return true;
     }
 
-    boolean memberlist(CommandContext context, CommandNode node, String[] args) {
-        plugin.state.memberList = !plugin.state.memberList;
+    boolean event(CommandContext context, CommandNode node, String[] args) {
+        plugin.state.event = !plugin.state.event;
         plugin.save();
-        context.message("Member list: " + plugin.state.memberList);
+        context.message("Event mode: " + plugin.state.event);
         return true;
     }
 }

@@ -45,12 +45,13 @@ public final class State {
     Vec3i lastDrawBlock = null;
     int totalTimeInTicks;
     int ticksLeft;
+    int ticksUntilReveal;
     int guessPoints = 3;
     List<String> wordList = new ArrayList();
     transient BossBar bossBar;
-    public static final int TICKS_PER_LETTER = 400;
+    public static final int TICKS_PER_LETTER = 300;
     private int ticksPerReveal = 500;
-    boolean memberList;
+    boolean event;
 
     public enum Phase {
         IDLE,
@@ -109,8 +110,13 @@ public final class State {
                 bossBar.removePlayer(player);
             }
         }
-        if (playTicks > 0 && playTicks % ticksPerReveal == 0) {
-            solveOneLetter();
+        if (playTicks > 0) {
+            if (ticksUntilReveal > 0) {
+                ticksUntilReveal -= 1;
+            } else {
+                solveOneLetter();
+                ticksUntilReveal = ticksPerReveal;
+            }
         }
         if (playTicks % 10 == 0) {
             Player drawer = getDrawer();
@@ -140,7 +146,10 @@ public final class State {
             }
         }
         if (totalTimeInTicks > 0) {
-            bossBar.setProgress((double) ticksLeft / (double) totalTimeInTicks);
+            double progress = totalTimeInTicks > 0
+                ? (double) ticksLeft / (double) totalTimeInTicks
+                : 0;
+            bossBar.setProgress(Math.min(1, Math.max(0, progress)));
         }
         ticksLeft -= 1;
         playTicks += 1;
@@ -184,6 +193,11 @@ public final class State {
             char[] chars = publicPhrase.toCharArray();
             chars[index] = secretPhrase.charAt(index);
             publicPhrase = new String(chars);
+        } else {
+            for (Player target : getWorld().getPlayers()) {
+                target.sendMessage(ChatColor.RED + "Time's up! The word was: " + secretPhrase);
+            }
+            endGame();
         }
     }
 
@@ -215,13 +229,34 @@ public final class State {
             target.sendMessage(ChatColor.GREEN + "It's " + drawer.getName() + "'s turn!");
             target.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 0.2f, 2.0f);
         }
+        if (drawer.getGameMode() == GameMode.CREATIVE) {
+            drawer.getInventory().setItem(0, new ItemStack(Material.BLACK_DYE));
+            drawer.getInventory().setItem(1, new ItemStack(Material.WHITE_DYE));
+            drawer.getInventory().setItem(2, new ItemStack(Material.RED_DYE));
+            drawer.getInventory().setItem(3, new ItemStack(Material.LIME_DYE));
+            drawer.getInventory().setItem(4, new ItemStack(Material.LIGHT_BLUE_DYE));
+            drawer.getInventory().setItem(5, new ItemStack(Material.YELLOW_DYE));
+            drawer.getInventory().setItem(6, new ItemStack(Material.ORANGE_DYE));
+            drawer.getInventory().setItem(7, new ItemStack(Material.PURPLE_DYE));
+            drawer.getInventory().setItem(8, new ItemStack(Material.PINK_DYE));
+            drawer.getInventory().setItem(9, new ItemStack(Material.LIGHT_GRAY_DYE));
+            drawer.getInventory().setItem(10, new ItemStack(Material.GRAY_DYE));
+            drawer.getInventory().setItem(11, new ItemStack(Material.GREEN_DYE));
+            drawer.getInventory().setItem(12, new ItemStack(Material.BROWN_DYE));
+            drawer.getInventory().setItem(13, new ItemStack(Material.CYAN_DYE));
+            drawer.getInventory().setItem(14, new ItemStack(Material.MAGENTA_DYE));
+            drawer.getInventory().setItem(15, new ItemStack(Material.BLUE_DYE));
+        }
         clearCanvas();
         lastDrawBlock = null;
         lastDrawTime = 0L;
         final int phraseLength = phrase.replace(" ", "").length();
         totalTimeInTicks = Math.min(15, phraseLength) * TICKS_PER_LETTER;
         ticksPerReveal = totalTimeInTicks / phraseLength;
-        ticksLeft = totalTimeInTicks;
+        int warmupTicks = 600;
+        totalTimeInTicks += warmupTicks;
+        ticksUntilReveal = ticksPerReveal + warmupTicks;
+        ticksLeft = totalTimeInTicks + 20;
         guessedRight.clear();
         guessPoints = 3;
     }
@@ -238,6 +273,11 @@ public final class State {
         phase = Phase.END;
         endTicks = 0;
         publicPhrase = secretPhrase;
+    }
+
+    public void stop() {
+        cleanUp();
+        phase = Phase.IDLE;
     }
 
     public void cleanUp() {
@@ -335,7 +375,7 @@ public final class State {
             target.sendMessage(ChatColor.GREEN + player.getName() + " guessed the phrase!");
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
         }
-        if (memberList) {
+        if (event) {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + drawer.getName());
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
         }

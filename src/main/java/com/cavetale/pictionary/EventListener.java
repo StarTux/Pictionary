@@ -42,11 +42,20 @@ public final class EventListener implements Listener {
 
     @EventHandler
     public void onPlayerSidebar(PlayerSidebarEvent event) {
+        if (plugin.state.phase == State.Phase.IDLE) return;
         Player player = event.getPlayer();
         if (!plugin.state.isIn(player.getWorld())) return;
         List<String> list = new ArrayList<>();
         Player drawer = plugin.state.getDrawer();
         if (drawer != null) {
+            if (player.equals(drawer)) {
+                list.add(ChatColor.GREEN + "Your turn! In order to " + ChatColor.WHITE + "draw" + ChatColor.GREEN + ",");
+                list.add(ChatColor.GREEN + "hold a " + ChatColor.WHITE + "dye" + ChatColor.GREEN + " in your hand and");
+                list.add(ChatColor.GREEN + "face the canvas.");
+                list.add(ChatColor.WHITE + "Left-click" + ChatColor.GREEN + " for broad strokes.");
+                list.add(ChatColor.WHITE + "Right-click" + ChatColor.GREEN + " for fine strokes.");
+                list.add("");
+            }
             list.add(ChatColor.GRAY + "Artist " + ChatColor.WHITE + drawer.getName());
         }
         list.add(ChatColor.GRAY + "Your Score " + ChatColor.WHITE + plugin.state.userOf(player).score);
