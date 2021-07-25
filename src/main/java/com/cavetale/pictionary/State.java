@@ -34,7 +34,6 @@ public final class State {
     Cuboid canvas = Cuboid.ZERO;
     Map<UUID, User> users = new HashMap<>();
     Set<UUID> guessedRight = new HashSet<>();
-    List<UUID> playOrder = new ArrayList<>();
     Phase phase = Phase.IDLE;
     int playTicks = 0;
     int endTicks = 0;
@@ -134,6 +133,9 @@ public final class State {
         if (!guessedRight.isEmpty()) {
             int notGuessed = 0;
             for (Player player : getEligiblePlayers()) {
+                if (player.isPermissionSet("group.streamer") && player.hasPermission("group.streamer")) {
+                    continue;
+                }
                 if (!isDrawer(player) && !guessedRight.contains(player.getUniqueId())) notGuessed += 1;
             }
             if (notGuessed == 0) {
@@ -164,18 +166,18 @@ public final class State {
     }
 
     void startNewGame() {
-        if (playOrder.isEmpty()) {
-            playOrder.addAll(getEligiblePlayers().stream().map(Player::getUniqueId).collect(Collectors.toList()));
-            Collections.shuffle(playOrder);
-        }
-        while (true) {
-            if (playOrder.isEmpty()) return;
-            UUID uuid = playOrder.remove(0);
-            Player player = Bukkit.getPlayer(uuid);
-            if (player == null || !isEligible(player)) continue;
-            startGame(player);
-            return;
-        }
+        List<Player> eligible = getEligiblePlayers();
+        if (eligible.isEmpty()) return;
+        eligible.sort((a, b) -> {
+                User ua = userOf(a);
+                User ub = userOf(b);
+                int result = Long.compare(ua.lastDrawTime, ub.lastDrawTime);
+                return result != 0
+                    ? result
+                    : Integer.compare(ua.score, ub.score);
+            });
+        Player player = eligible.get(0);
+        startGame(player);
     }
 
     void solveOneLetter() {
@@ -216,7 +218,7 @@ public final class State {
     }
 
     void startGame(Player drawer, String phrase) {
-        userOf(drawer); // create
+        userOf(drawer).lastDrawTime = System.currentTimeMillis(); // create
         drawerUuid = drawer.getUniqueId();
         phase = Phase.PLAY;
         playTicks = 0;
