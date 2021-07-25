@@ -166,16 +166,15 @@ public final class State {
     }
 
     void startNewGame() {
+        Random random = ThreadLocalRandom.current();
         List<Player> eligible = getEligiblePlayers();
         if (eligible.isEmpty()) return;
-        eligible.sort((a, b) -> {
-                User ua = userOf(a);
-                User ub = userOf(b);
-                int result = Long.compare(ua.lastDrawTime, ub.lastDrawTime);
-                return result != 0
-                    ? result
-                    : Integer.compare(ua.score, ub.score);
-            });
+        eligible.sort((a, b) -> Long.compare(userOf(a).lastDrawTime, userOf(b).lastDrawTime));
+        long min = userOf(eligible.get(0)).lastDrawTime;
+        while (userOf(eligible.get(eligible.size() - 1)).lastDrawTime > min) {
+            eligible.remove(eligible.size() - 1);
+        }
+        Collections.shuffle(eligible, random);
         Player player = eligible.get(0);
         startGame(player);
     }
