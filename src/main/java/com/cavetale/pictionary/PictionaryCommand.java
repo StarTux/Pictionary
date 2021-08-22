@@ -1,8 +1,8 @@
 package com.cavetale.pictionary;
 
-import com.cavetale.pictionary.command.CommandContext;
-import com.cavetale.pictionary.command.CommandNode;
-import com.cavetale.pictionary.command.CommandWarn;
+import com.cavetale.core.command.CommandContext;
+import com.cavetale.core.command.CommandNode;
+import com.cavetale.core.command.CommandWarn;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

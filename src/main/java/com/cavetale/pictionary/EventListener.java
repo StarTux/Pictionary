@@ -5,7 +5,9 @@ import com.cavetale.sidebar.Priority;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -45,38 +47,51 @@ public final class EventListener implements Listener {
         if (plugin.state.phase == State.Phase.IDLE) return;
         Player player = event.getPlayer();
         if (!plugin.state.isIn(player.getWorld())) return;
-        List<String> list = new ArrayList<>();
+        List<Component> list = new ArrayList<>();
         Player drawer = plugin.state.getDrawer();
         if (drawer != null) {
             if (player.equals(drawer)) {
-                list.add(ChatColor.GREEN + "Your turn! In order to " + ChatColor.WHITE + "draw" + ChatColor.GREEN + ",");
-                list.add(ChatColor.GREEN + "hold a " + ChatColor.WHITE + "dye" + ChatColor.GREEN + " in your hand and");
-                list.add(ChatColor.GREEN + "face the canvas.");
-                list.add(ChatColor.WHITE + "Left-click" + ChatColor.GREEN + " for broad strokes.");
-                list.add(ChatColor.WHITE + "Right-click" + ChatColor.GREEN + " for fine strokes.");
-                list.add("");
+                list.add(Component.text("Your turn! In order to draw,", NamedTextColor.GREEN));
+                list.add(Component.text("hold a dye in your hand and", NamedTextColor.GREEN));
+                list.add(Component.text("face the canvas", NamedTextColor.GREEN));
+                list.add(TextComponent.ofChildren(Component.text("Left-click", NamedTextColor.WHITE),
+                                                  Component.text(" for broad strokes", NamedTextColor.WHITE)));
+                list.add(TextComponent.ofChildren(Component.text("Right-click", NamedTextColor.WHITE),
+                                                  Component.text(" for fine strokes", NamedTextColor.WHITE)));
+                list.add(Component.empty());
             }
-            list.add(ChatColor.GRAY + "Artist " + ChatColor.WHITE + drawer.getName());
+            list.add(Component.text()
+                     .append(Component.text("Artist ", NamedTextColor.GRAY))
+                     .append(drawer.displayName())
+                     .color(NamedTextColor.WHITE)
+                     .build());
         }
-        list.add(ChatColor.GRAY + "Your Score " + ChatColor.WHITE + plugin.state.userOf(player).score);
+        list.add(TextComponent.ofChildren(Component.text("Your Score ", NamedTextColor.GRAY),
+                                          Component.text("" + plugin.state.userOf(player).score, NamedTextColor.WHITE)));
         List<User> users = plugin.state.rankScore();
         int i = 0;
         for (User user : users) {
-            Player other = user.getPlayer();
+            final Player userPlayer = user.getPlayer();
+            final Component userName = userPlayer != null
+                ? userPlayer.displayName()
+                : Component.text(user.name);
             int rank = ++i;
             if (i > 13) break;
             if (user.score == 0) break;
+            TextComponent.Builder userLine = Component.text()
+                .append(Component.text("#" + rank + " " + user.score + " "))
+                .append(userName);
             if (user.uuid.equals(plugin.state.drawerUuid)) {
-                list.add(ChatColor.RED + "#" + rank + ChatColor.WHITE + " " + user.score + " " + ChatColor.BLUE + user.name);
+                userLine.color(NamedTextColor.BLUE);
             } else if (plugin.state.guessedRight.contains(user.uuid)) {
-                list.add(ChatColor.RED + "#" + rank + ChatColor.WHITE + " " + user.score + " " + ChatColor.GOLD + user.name);
-            } else if (other != null && plugin.state.isEligible(other)) {
-                list.add(ChatColor.RED + "#" + rank + ChatColor.WHITE + " " + user.score + " " + ChatColor.GRAY + user.name);
+                userLine.color(NamedTextColor.GOLD);
+            } else if (userPlayer != null && plugin.state.isEligible(userPlayer)) {
+                userLine.color(NamedTextColor.WHITE);
             } else {
-                list.add(ChatColor.RED + "#" + rank + ChatColor.DARK_GRAY + " " + user.score + " " + user.name);
+                userLine.color(NamedTextColor.DARK_GRAY);
             }
         }
-        event.addLines(plugin, Priority.HIGHEST, list);
+        event.add(plugin, (plugin.state.event ? Priority.HIGHEST : Priority.LOW), list);
     }
 
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)

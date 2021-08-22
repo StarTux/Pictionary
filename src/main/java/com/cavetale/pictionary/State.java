@@ -1,5 +1,6 @@
 package com.cavetale.pictionary;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -12,6 +13,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -46,7 +51,7 @@ public final class State {
     int ticksLeft;
     int ticksUntilReveal;
     int guessPoints = 3;
-    List<String> wordList = new ArrayList();
+    List<String> wordList = new ArrayList<>();
     transient BossBar bossBar;
     public static final int TICKS_PER_LETTER = 300;
     private int ticksPerReveal = 500;
@@ -120,12 +125,13 @@ public final class State {
         if (playTicks % 10 == 0) {
             Player drawer = getDrawer();
             if (drawer != null) {
-                drawer.sendActionBar(ChatColor.GREEN + "Secret: " + ChatColor.WHITE + secretPhrase);
+                drawer.sendActionBar(TextComponent.ofChildren(Component.text("Secret: ", NamedTextColor.GRAY),
+                                                              Component.text(secretPhrase, NamedTextColor.WHITE)));
             }
         }
         if (ticksLeft <= 0 || getDrawer() == null) {
             for (Player target : getWorld().getPlayers()) {
-                target.sendMessage(ChatColor.RED + "Time's up! The word was: " + secretPhrase);
+                target.sendMessage(Component.text("\nTime's up! The word was: " + secretPhrase + "\n", NamedTextColor.RED));
             }
             endGame();
             return;
@@ -140,7 +146,7 @@ public final class State {
             }
             if (notGuessed == 0) {
                 for (Player target : getWorld().getPlayers()) {
-                    target.sendMessage(ChatColor.GREEN + "Everybody guessed the word: " + secretPhrase);
+                    target.sendMessage(Component.text("\nEverybody guessed the word: " + secretPhrase + "\n", NamedTextColor.GREEN));
                     target.playSound(target.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.MASTER, 0.2f, 2.0f);
                 }
                 endGame();
@@ -196,7 +202,7 @@ public final class State {
             publicPhrase = new String(chars);
         } else {
             for (Player target : getWorld().getPlayers()) {
-                target.sendMessage(ChatColor.RED + "Time's up! The word was: " + secretPhrase);
+                target.sendMessage(Component.text("\nTime's up! The word was: " + secretPhrase + "\n", NamedTextColor.RED));
             }
             endGame();
         }
@@ -223,11 +229,16 @@ public final class State {
         playTicks = 0;
         secretPhrase = phrase;
         publicPhrase = phrase.replaceAll("[^ ]", "_");
+        Title title = Title.title(Component.text().color(NamedTextColor.GREEN).append(drawer.displayName()).build(),
+                                  Component.text("It's your turn!", NamedTextColor.GREEN),
+                                  Title.Times.of(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
         for (Player target : getWorld().getPlayers()) {
-            target.sendTitle(ChatColor.GREEN + drawer.getName(),
-                             ChatColor.GREEN + "It's your turn!",
-                             0, 20, 0);
-            target.sendMessage(ChatColor.GREEN + "It's " + drawer.getName() + "'s turn!");
+            target.showTitle(title);
+            target.sendMessage(Component.text()
+                               .append(Component.text("\nIt's "))
+                               .append(drawer.displayName())
+                               .append(Component.text("'s turn!\n"))
+                               .color(NamedTextColor.GREEN));
             target.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 0.2f, 2.0f);
         }
         if (drawer.getGameMode() == GameMode.CREATIVE) {
@@ -373,7 +384,10 @@ public final class State {
         Player drawer = getDrawer();
         userOf(drawer).score += 1;
         for (Player target : getWorld().getPlayers()) {
-            target.sendMessage(ChatColor.GREEN + player.getName() + " guessed the phrase!");
+            target.sendMessage(Component.text()
+                               .append(player.displayName())
+                               .append(Component.text(" guessed the phrase!"))
+                               .color(NamedTextColor.GREEN));
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
         }
         if (event) {
