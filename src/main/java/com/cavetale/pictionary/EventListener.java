@@ -90,6 +90,7 @@ public final class EventListener implements Listener {
             } else {
                 userLine.color(NamedTextColor.DARK_GRAY);
             }
+            list.add(userLine.build());
         }
         event.add(plugin, (plugin.state.event ? Priority.HIGHEST : Priority.LOW), list);
     }
