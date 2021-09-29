@@ -2,18 +2,18 @@ package com.cavetale.pictionary;
 
 import com.cavetale.sidebar.PlayerSidebarEvent;
 import com.cavetale.sidebar.Priority;
+import com.winthier.chat.event.ChatPlayerTalkEvent;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 @RequiredArgsConstructor
@@ -54,10 +54,12 @@ public final class EventListener implements Listener {
                 list.add(Component.text("Your turn! In order to draw,", NamedTextColor.GREEN));
                 list.add(Component.text("hold a dye in your hand and", NamedTextColor.GREEN));
                 list.add(Component.text("face the canvas", NamedTextColor.GREEN));
-                list.add(TextComponent.ofChildren(Component.text("Left-click", NamedTextColor.WHITE),
-                                                  Component.text(" for broad strokes", NamedTextColor.WHITE)));
-                list.add(TextComponent.ofChildren(Component.text("Right-click", NamedTextColor.WHITE),
-                                                  Component.text(" for fine strokes", NamedTextColor.WHITE)));
+                list.add(Component.join(JoinConfiguration.noSeparators(),
+                                        Component.text("Left-click", NamedTextColor.WHITE),
+                                        Component.text(" for broad strokes", NamedTextColor.WHITE)));
+                list.add(Component.join(JoinConfiguration.noSeparators(),
+                                        Component.text("Right-click", NamedTextColor.WHITE),
+                                        Component.text(" for fine strokes", NamedTextColor.WHITE)));
                 list.add(Component.empty());
             }
             list.add(Component.text()
@@ -66,8 +68,9 @@ public final class EventListener implements Listener {
                      .color(NamedTextColor.WHITE)
                      .build());
         }
-        list.add(TextComponent.ofChildren(Component.text("Your Score ", NamedTextColor.GRAY),
-                                          Component.text("" + plugin.state.userOf(player).score, NamedTextColor.WHITE)));
+        list.add(Component.join(JoinConfiguration.noSeparators(),
+                                Component.text("Your Score ", NamedTextColor.GRAY),
+                                Component.text("" + plugin.state.userOf(player).score, NamedTextColor.WHITE)));
         List<User> users = plugin.state.rankScore();
         int i = 0;
         for (User user : users) {
@@ -96,19 +99,7 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
-    public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
-        String msg = event.getMessage();
-        if (!msg.contains(" ")) return;
-        String[] toks = msg.split(" ", 2);
-        msg = toks[1];
-        Player player = event.getPlayer();
-        if (plugin.state.onGuess(plugin, player, msg)) {
-            event.setMessage(toks[0] + " " + plugin.state.publicPhrase.replace("_", "*"));
-        }
-    }
-
-    @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
-    public void onAsyncPlayerChat(AsyncPlayerChatEvent event) {
+    public void onChatPlayerTalk(ChatPlayerTalkEvent event) {
         String msg = event.getMessage();
         Player player = event.getPlayer();
         if (plugin.state.onGuess(plugin, player, msg)) {

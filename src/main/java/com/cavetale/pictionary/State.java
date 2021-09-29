@@ -14,7 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -125,8 +125,9 @@ public final class State {
         if (playTicks % 10 == 0) {
             Player drawer = getDrawer();
             if (drawer != null) {
-                drawer.sendActionBar(TextComponent.ofChildren(Component.text("Secret: ", NamedTextColor.GRAY),
-                                                              Component.text(secretPhrase, NamedTextColor.WHITE)));
+                drawer.sendActionBar(Component.join(JoinConfiguration.noSeparators(),
+                                                    Component.text("Secret: ", NamedTextColor.GRAY),
+                                                    Component.text(secretPhrase, NamedTextColor.WHITE)));
             }
         }
         if (ticksLeft <= 0 || getDrawer() == null) {
@@ -363,7 +364,6 @@ public final class State {
         }
     }
 
-    // Maybe called async
     public boolean onGuess(PictionaryPlugin plugin, Player player, String msg) {
         if (!msg.equalsIgnoreCase(secretPhrase)) return false;
         plugin.getServer().getScheduler().runTask(plugin, () -> guessCallback(plugin, player, msg));

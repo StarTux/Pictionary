@@ -102,5 +102,13 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- Chat -->
+    <dependency>
+      <groupId>com.winthier.chat</groupId>
+      <artifactId>chat</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+
   </dependencies>
 </project>
