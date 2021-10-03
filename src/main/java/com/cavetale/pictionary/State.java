@@ -380,6 +380,7 @@ public final class State {
     }
 
     public boolean onGuess(PictionaryPlugin plugin, Player player, String msg) {
+        if (msg == null) return false;
         if (!msg.equalsIgnoreCase(secretPhrase)) return false;
         plugin.getServer().getScheduler().runTask(plugin, () -> guessCallback(plugin, player, msg));
         return true;
