@@ -5,11 +5,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class PictionaryPlugin extends JavaPlugin {
-    static PictionaryPlugin instance;
+    protected static PictionaryPlugin instance;
     private PictionaryCommand pictionaryCommand = new PictionaryCommand(this);
     private EventListener eventListener = new EventListener(this);
     State state; // loaded onEnable
@@ -46,7 +48,7 @@ public final class PictionaryPlugin extends JavaPlugin {
 
     public List<String> getWordList() {
         File dir = new File(getDataFolder(), "words");
-        List<String> list = new ArrayList<>();
+        Map<String, String> map = new HashMap<>();
         for (File file : dir.listFiles()) {
             try (BufferedReader br = new BufferedReader(new FileReader(file))) {
                 while (true) {
@@ -54,12 +56,13 @@ public final class PictionaryPlugin extends JavaPlugin {
                     if (line == null) break;
                     line = line.trim();
                     if (line.isEmpty()) continue;
-                    list.add(line);
+                    if (line.length() < 5) continue;
+                    map.put(line.toLowerCase(), line);
                 }
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
         }
-        return list;
+        return new ArrayList<>(map.values());
     }
 }

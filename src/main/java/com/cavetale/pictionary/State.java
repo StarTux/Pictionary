@@ -218,6 +218,7 @@ public final class State {
         if (wordList.isEmpty()) {
             wordList = PictionaryPlugin.instance.getWordList();
             Collections.shuffle(wordList);
+            PictionaryPlugin.instance.getLogger().info(wordList.size() + " words loaded from disk");
         }
         String word = wordList.remove(0);
         startGame(player, word);
