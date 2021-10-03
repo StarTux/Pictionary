@@ -134,6 +134,7 @@ public final class State {
             for (Player target : getWorld().getPlayers()) {
                 target.sendMessage(Component.text("\nTime's up! The word was: " + secretPhrase + "\n", NamedTextColor.RED));
             }
+            if (event) rewardDrawer();
             endGame();
             return;
         }
@@ -150,6 +151,7 @@ public final class State {
                     target.sendMessage(Component.text("\nEverybody guessed the word: " + secretPhrase + "\n", NamedTextColor.GREEN));
                     target.playSound(target.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.MASTER, 0.2f, 2.0f);
                 }
+                if (event) rewardDrawer();
                 endGame();
                 return;
             }
@@ -205,6 +207,7 @@ public final class State {
             for (Player target : getWorld().getPlayers()) {
                 target.sendMessage(Component.text("\nTime's up! The word was: " + secretPhrase + "\n", NamedTextColor.RED));
             }
+            if (event) rewardDrawer();
             endGame();
         }
     }
@@ -272,7 +275,7 @@ public final class State {
         ticksUntilReveal = ticksPerReveal + warmupTicks;
         ticksLeft = totalTimeInTicks + 20;
         guessedRight.clear();
-        guessPoints = 3;
+        guessPoints = 5;
     }
 
     public Player getDrawer() {
@@ -287,6 +290,17 @@ public final class State {
         phase = Phase.END;
         endTicks = 0;
         publicPhrase = secretPhrase;
+    }
+
+    private void rewardDrawer() {
+        Player drawer = getDrawer();
+        if (drawer != null) return;
+        String drawerName = drawer.getName();
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + drawerName);
+        List<String> titles = List.of("Cavepaint", "Pixel");
+        String cmd = "titles unlockset " + drawerName + " " + String.join(" ", titles);
+        PictionaryPlugin.instance.getLogger().info("Running command: " + cmd);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
     }
 
     public void stop() {
@@ -392,7 +406,6 @@ public final class State {
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
         }
         if (event) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + drawer.getName());
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
         }
     }

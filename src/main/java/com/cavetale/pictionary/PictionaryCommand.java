@@ -6,6 +6,8 @@ import com.cavetale.core.command.CommandWarn;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -32,8 +34,8 @@ public final class PictionaryCommand implements TabExecutor {
         root.addChild("stop")
             .caller(this::stop)
             .description("Stop the game");
-        root.addChild("clear")
-            .caller(this::clear)
+        root.addChild("clearscores")
+            .caller(this::clearScores)
             .description("Clear all scores");
         root.addChild("scores")
             .caller(this::scores)
@@ -50,9 +52,10 @@ public final class PictionaryCommand implements TabExecutor {
         root.addChild("reload")
             .caller(this::reload)
             .description("Reload from disk");
-        root.addChild("event")
+        root.addChild("event").arguments("<value>")
             .caller(this::event)
-            .description("Toggle event mode");
+            .completableList(List.of("true", "false"))
+            .description("Set event mode");
         plugin.getCommand("pictionary").setExecutor(this);
     }
 
@@ -120,7 +123,7 @@ public final class PictionaryCommand implements TabExecutor {
         return true;
     }
 
-    boolean clear(CommandContext context, CommandNode node, String[] args) {
+    boolean clearScores(CommandContext context, CommandNode node, String[] args) {
         if (args.length != 0) return false;
         plugin.state.users.clear();
         context.message("All scores cleared");
@@ -151,9 +154,17 @@ public final class PictionaryCommand implements TabExecutor {
     }
 
     boolean event(CommandContext context, CommandNode node, String[] args) {
-        plugin.state.event = !plugin.state.event;
-        plugin.save();
-        context.message("Event mode: " + plugin.state.event);
+        if (args.length > 1) return false;
+        if (args.length >= 1) {
+            try {
+                plugin.state.event = Boolean.parseBoolean(args[0]);
+            } catch (IllegalArgumentException iae) {
+                throw new CommandWarn("Boolean expected: " + args[0]);
+            }
+            plugin.save();
+        }
+        context.message(Component.text("Event mode: " + plugin.state.event,
+                                       NamedTextColor.YELLOW));
         return true;
     }
 }
