@@ -228,6 +228,7 @@ public final class State {
     }
 
     void startGame(Player drawer, String phrase) {
+        PictionaryPlugin.instance.getLogger().info("New drawer: " + drawer.getName() + ", " + phrase);
         userOf(drawer).lastDrawTime = System.currentTimeMillis(); // create
         drawerUuid = drawer.getUniqueId();
         phase = Phase.PLAY;
