@@ -294,7 +294,7 @@ public final class State {
 
     private void rewardDrawer() {
         Player drawer = getDrawer();
-        if (drawer != null) return;
+        if (drawer == null) return;
         String drawerName = drawer.getName();
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + drawerName);
         List<String> titles = List.of("Cavepaint", "Pixel");
