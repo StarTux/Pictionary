@@ -91,7 +91,7 @@ public final class PictionaryCommand implements TabExecutor {
             context.message("Game started!");
             return true;
         }
-        if (args.length < 2) return false;
+        if (args.length < 1) return false;
         Player drawer = plugin.getServer().getPlayerExact(args[0]);
         if (drawer == null) throw new CommandWarn("Player not found: " + args[0]);
         String phrase = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
