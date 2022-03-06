@@ -9,12 +9,13 @@ import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @RequiredArgsConstructor
 public final class EventListener implements Listener {
@@ -51,47 +52,50 @@ public final class EventListener implements Listener {
         Player drawer = plugin.state.getDrawer();
         if (drawer != null) {
             if (player.equals(drawer)) {
-                list.add(Component.text("Your turn! In order to draw,", NamedTextColor.GREEN));
-                list.add(Component.text("hold a dye in your hand and", NamedTextColor.GREEN));
-                list.add(Component.text("face the canvas", NamedTextColor.GREEN));
+                list.add(text("Your turn! In order to draw,", GREEN));
+                list.add(text("hold a dye in your hand and", GREEN));
+                list.add(text("face the canvas", GREEN));
                 list.add(Component.join(JoinConfiguration.noSeparators(),
-                                        Component.text("Left-click", NamedTextColor.WHITE),
-                                        Component.text(" for broad strokes", NamedTextColor.WHITE)));
+                                        text("Left-click", WHITE),
+                                        text(" for broad strokes", WHITE)));
                 list.add(Component.join(JoinConfiguration.noSeparators(),
-                                        Component.text("Right-click", NamedTextColor.WHITE),
-                                        Component.text(" for fine strokes", NamedTextColor.WHITE)));
+                                        text("Right-click", WHITE),
+                                        text(" for fine strokes", WHITE)));
                 list.add(Component.empty());
             }
-            list.add(Component.text()
-                     .append(Component.text("Artist ", NamedTextColor.GRAY))
+            list.add(text()
+                     .append(text("Artist ", GRAY))
                      .append(drawer.displayName())
-                     .color(NamedTextColor.WHITE)
+                     .color(WHITE)
                      .build());
         }
+        boolean guessedRight = plugin.state.guessedRight.contains(player.getUniqueId());
         list.add(Component.join(JoinConfiguration.noSeparators(),
-                                Component.text("Your Score ", NamedTextColor.GRAY),
-                                Component.text("" + plugin.state.userOf(player).score, NamedTextColor.WHITE)));
+                                text("Your Score ", GRAY),
+                                (guessedRight
+                                 ? text("" + plugin.state.userOf(player).score + "\u2713", GREEN)
+                                 : text("" + plugin.state.userOf(player).score, WHITE))));
         List<User> users = plugin.state.rankScore();
         int i = 0;
         for (User user : users) {
             final Player userPlayer = user.getPlayer();
             final Component userName = userPlayer != null
                 ? userPlayer.displayName()
-                : Component.text(user.name);
+                : text(user.name);
             int rank = ++i;
             if (i > 13) break;
             if (user.score == 0) break;
-            TextComponent.Builder userLine = Component.text()
-                .append(Component.text("#" + rank + " " + user.score + " "))
+            TextComponent.Builder userLine = text()
+                .append(text(user.score + " "))
                 .append(userName);
             if (user.uuid.equals(plugin.state.drawerUuid)) {
-                userLine.color(NamedTextColor.BLUE);
+                userLine.color(BLUE);
             } else if (plugin.state.guessedRight.contains(user.uuid)) {
-                userLine.color(NamedTextColor.GOLD);
+                userLine.color(GOLD);
             } else if (userPlayer != null && plugin.state.isEligible(userPlayer)) {
-                userLine.color(NamedTextColor.WHITE);
+                userLine.color(WHITE);
             } else {
-                userLine.color(NamedTextColor.DARK_GRAY);
+                userLine.color(DARK_GRAY);
             }
             list.add(userLine.build());
         }

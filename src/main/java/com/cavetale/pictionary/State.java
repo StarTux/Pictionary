@@ -15,7 +15,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -33,6 +32,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public final class State {
     String worldName = "";
@@ -50,7 +53,6 @@ public final class State {
     int totalTimeInTicks;
     int ticksLeft;
     int ticksUntilReveal;
-    int guessPoints = 3;
     List<String> wordList = new ArrayList<>();
     transient BossBar bossBar;
     public static final int TICKS_PER_LETTER = 300;
@@ -126,13 +128,13 @@ public final class State {
             Player drawer = getDrawer();
             if (drawer != null) {
                 drawer.sendActionBar(Component.join(JoinConfiguration.noSeparators(),
-                                                    Component.text("Secret: ", NamedTextColor.GRAY),
-                                                    Component.text(secretPhrase, NamedTextColor.WHITE)));
+                                                    text("Secret: ", GRAY),
+                                                    text(secretPhrase, WHITE)));
             }
         }
         if (ticksLeft <= 0 || getDrawer() == null) {
             for (Player target : getWorld().getPlayers()) {
-                target.sendMessage(Component.text("\nTime's up! The word was: " + secretPhrase + "\n", NamedTextColor.RED));
+                target.sendMessage(text("\nTime's up! The word was: " + secretPhrase + "\n", RED));
             }
             if (event) rewardDrawer();
             endGame();
@@ -148,7 +150,7 @@ public final class State {
             }
             if (notGuessed == 0) {
                 for (Player target : getWorld().getPlayers()) {
-                    target.sendMessage(Component.text("\nEverybody guessed the word: " + secretPhrase + "\n", NamedTextColor.GREEN));
+                    target.sendMessage(text("\nEverybody guessed the word: " + secretPhrase + "\n", GREEN));
                     target.playSound(target.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.MASTER, 0.2f, 2.0f);
                 }
                 if (event) rewardDrawer();
@@ -205,7 +207,7 @@ public final class State {
             publicPhrase = new String(chars);
         } else {
             for (Player target : getWorld().getPlayers()) {
-                target.sendMessage(Component.text("\nTime's up! The word was: " + secretPhrase + "\n", NamedTextColor.RED));
+                target.sendMessage(text("\nTime's up! The word was: " + secretPhrase + "\n", RED));
             }
             if (event) rewardDrawer();
             endGame();
@@ -235,16 +237,16 @@ public final class State {
         playTicks = 0;
         secretPhrase = phrase;
         publicPhrase = phrase.replaceAll("[^ ]", "_");
-        Title title = Title.title(Component.text().color(NamedTextColor.GREEN).append(drawer.displayName()).build(),
-                                  Component.text("It's your turn!", NamedTextColor.GREEN),
+        Title title = Title.title(text().color(GREEN).append(drawer.displayName()).build(),
+                                  text("It's your turn!", GREEN),
                                   Title.Times.times(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
         for (Player target : getWorld().getPlayers()) {
             target.showTitle(title);
-            target.sendMessage(Component.text()
-                               .append(Component.text("\nIt's "))
+            target.sendMessage(text()
+                               .append(text("\nIt's "))
                                .append(drawer.displayName())
-                               .append(Component.text("'s turn!\n"))
-                               .color(NamedTextColor.GREEN));
+                               .append(text("'s turn!\n"))
+                               .color(GREEN));
             target.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 0.2f, 2.0f);
         }
         if (drawer.getGameMode() == GameMode.CREATIVE) {
@@ -276,7 +278,6 @@ public final class State {
         ticksUntilReveal = ticksPerReveal + warmupTicks;
         ticksLeft = totalTimeInTicks + 20;
         guessedRight.clear();
-        guessPoints = 5;
     }
 
     public Player getDrawer() {
@@ -396,15 +397,19 @@ public final class State {
         if (guessedRight.contains(player.getUniqueId())) return;
         guessedRight.add(player.getUniqueId());
         plugin.getLogger().info("Guessed right: " + player.getName());
-        userOf(player).score += guessPoints;
-        if (guessPoints > 1) guessPoints -= 1;
+        int guessPoints = 0;
+        for (int i = 0; i < publicPhrase.length(); i += 1) {
+            if (publicPhrase.charAt(i) == '_') guessPoints += 1;
+        }
+        userOf(player).score += Math.max(1, guessPoints);
         Player drawer = getDrawer();
-        userOf(drawer).score += 1;
+        userOf(drawer).score += guessPoints;
         for (Player target : getWorld().getPlayers()) {
-            target.sendMessage(Component.text()
-                               .append(player.displayName())
-                               .append(Component.text(" guessed the phrase!"))
-                               .color(NamedTextColor.GREEN));
+            target.sendMessage(join(noSeparators(),
+                                    player.displayName(),
+                                    text(" guessed the phrase!", GREEN),
+                                    text(" Points: ", GRAY),
+                                    text("" + guessPoints, WHITE)));
             target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 0.2f, 2.0f);
         }
         if (event) {
