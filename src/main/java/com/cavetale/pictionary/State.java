@@ -237,7 +237,7 @@ public final class State {
         publicPhrase = phrase.replaceAll("[^ ]", "_");
         Title title = Title.title(Component.text().color(NamedTextColor.GREEN).append(drawer.displayName()).build(),
                                   Component.text("It's your turn!", NamedTextColor.GREEN),
-                                  Title.Times.of(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
+                                  Title.Times.times(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
         for (Player target : getWorld().getPlayers()) {
             target.showTitle(title);
             target.sendMessage(Component.text()
