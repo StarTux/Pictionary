@@ -73,7 +73,7 @@ public final class EventListener implements Listener {
         list.add(Component.join(JoinConfiguration.noSeparators(),
                                 text("Your Score ", GRAY),
                                 (guessedRight
-                                 ? text("" + plugin.state.userOf(player).score + "\u2713", GREEN)
+                                 ? text("" + plugin.state.userOf(player).score + "\u2714", GREEN)
                                  : text("" + plugin.state.userOf(player).score, WHITE))));
         List<User> users = plugin.state.rankScore();
         int i = 0;
@@ -86,7 +86,7 @@ public final class EventListener implements Listener {
             if (i > 13) break;
             if (user.score == 0) break;
             TextComponent.Builder userLine = text()
-                .append(text(user.score + " "))
+                .append(text(user.score + " ", GRAY))
                 .append(userName);
             if (user.uuid.equals(plugin.state.drawerUuid)) {
                 userLine.color(BLUE);
