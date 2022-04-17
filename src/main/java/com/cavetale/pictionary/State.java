@@ -1,5 +1,6 @@
 package com.cavetale.pictionary;
 
+import com.destroystokyo.paper.MaterialTags;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -331,10 +332,11 @@ public final class State {
             .collect(Collectors.toList());
     }
 
-    void draw(Player player, boolean thick) {
+    protected void draw(Player player, boolean thick) {
         Block block = player.getTargetBlock(100);
         if (block == null) return;
         if (!canvas.contains(block)) return;
+        if (!MaterialTags.CONCRETES.isTagged(block.getType())) return;
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item == null) return;
         Material mat = item.getType();
@@ -368,13 +370,14 @@ public final class State {
         lastDrawBlock = Vec3i.of(block);
     }
 
-    void draw(Player player, Block block, Material mat, boolean thick) {
+    private void draw(Player player, Block block, Material mat, boolean thick) {
         if (!canvas.contains(block)) return;
+        if (!MaterialTags.CONCRETES.isTagged(block.getType())) return;
         block.setType(mat);
         if (thick) {
             for (BlockFace face : Arrays.asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST, BlockFace.UP, BlockFace.DOWN)) {
                 Block b = block.getRelative(face);
-                if (canvas.contains(b)) {
+                if (canvas.contains(b) && MaterialTags.CONCRETES.isTagged(b.getType())) {
                     b.setType(mat);
                 }
             }
