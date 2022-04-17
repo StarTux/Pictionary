@@ -320,7 +320,10 @@ public final class State {
         for (int y = canvas.ay; y <= canvas.by; y += 1) {
             for (int z = canvas.az; z <= canvas.bz; z += 1) {
                 for (int x = canvas.ax; x <= canvas.bx; x += 1) {
-                    world.getBlockAt(x, y, z).setType(Material.WHITE_CONCRETE);
+                    Block block = world.getBlockAt(x, y, z);
+                    if (MaterialTags.CONCRETES.isTagged(block.getType())) {
+                        block.setType(Material.WHITE_CONCRETE);
+                    }
                 }
             }
         }
