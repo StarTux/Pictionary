@@ -138,6 +138,7 @@ public final class PictionaryCommand implements TabExecutor {
     boolean clearScores(CommandContext context, CommandNode node, String[] args) {
         if (args.length != 0) return false;
         plugin.state.users.clear();
+        plugin.state.computeHighscore();
         context.message("All scores cleared");
         return true;
     }
