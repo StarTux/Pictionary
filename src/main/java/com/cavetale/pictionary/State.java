@@ -1,5 +1,6 @@
 package com.cavetale.pictionary;
 
+import com.cavetale.fam.trophy.Highscore;
 import com.destroystokyo.paper.MaterialTags;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -39,31 +40,37 @@ import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public final class State {
-    String worldName = "";
-    Cuboid canvas = Cuboid.ZERO;
-    Map<UUID, User> users = new HashMap<>();
-    Set<UUID> guessedRight = new HashSet<>();
-    Phase phase = Phase.IDLE;
-    int playTicks = 0;
-    int endTicks = 0;
-    String secretPhrase = "";
-    String publicPhrase = "";
-    UUID drawerUuid = null;
-    long lastDrawTime = 0;
-    Vec3i lastDrawBlock = null;
-    int totalTimeInTicks;
-    int ticksLeft;
-    int ticksUntilReveal;
-    List<String> wordList = new ArrayList<>();
-    transient BossBar bossBar;
     public static final int TICKS_PER_LETTER = 300;
-    private int ticksPerReveal = 500;
-    boolean event;
+    protected String worldName = "";
+    protected Cuboid canvas = Cuboid.ZERO;
+    protected Map<UUID, User> users = new HashMap<>();
+    protected Map<UUID, Integer> scores = new HashMap<>();
+    protected Set<UUID> guessedRight = new HashSet<>();
+    protected Phase phase = Phase.IDLE;
+    protected int playTicks = 0;
+    protected int endTicks = 0;
+    protected String secretPhrase = "";
+    protected String publicPhrase = "";
+    protected UUID drawerUuid = null;
+    protected long lastDrawTime = 0;
+    protected Vec3i lastDrawBlock = null;
+    protected int totalTimeInTicks;
+    protected int ticksLeft;
+    protected int ticksUntilReveal;
+    protected List<String> wordList = new ArrayList<>();
+    protected transient BossBar bossBar;
+    protected int ticksPerReveal = 500;
+    protected boolean event;
+    protected transient List<Highscore> highscore;
 
     public enum Phase {
         IDLE,
         PLAY,
         END;
+    }
+
+    protected void enable() {
+        computeHighscore();
     }
 
     public User userOf(Player player) {
@@ -329,12 +336,6 @@ public final class State {
         }
     }
 
-    public List<User> rankScore() {
-        return new ArrayList<>(users.values()).stream()
-            .sorted((a, b) -> Integer.compare(b.score, a.score))
-            .collect(Collectors.toList());
-    }
-
     protected void draw(Player player, boolean thick) {
         Block block = player.getTargetBlock(100);
         if (block == null) return;
@@ -394,7 +395,15 @@ public final class State {
         return true;
     }
 
-    void guessCallback(PictionaryPlugin plugin, Player player, String msg) {
+    protected int getScore(UUID uuid) {
+        return scores.getOrDefault(uuid, 0);
+    }
+
+    protected void addScore(UUID uuid, int value) {
+        scores.put(uuid, Math.max(0, getScore(uuid) + value));
+    }
+
+    protected void guessCallback(PictionaryPlugin plugin, Player player, String msg) {
         if (!msg.equalsIgnoreCase(secretPhrase)) return;
         if (!isIn(player.getWorld())) return;
         if (phase != State.Phase.PLAY) return;
@@ -407,9 +416,10 @@ public final class State {
         for (int i = 0; i < publicPhrase.length(); i += 1) {
             if (publicPhrase.charAt(i) == '_') guessPoints += 1;
         }
-        userOf(player).score += Math.max(1, guessPoints);
+        addScore(player.getUniqueId(), Math.max(1, guessPoints));
         Player drawer = getDrawer();
-        userOf(drawer).score += guessPoints;
+        addScore(drawer.getUniqueId(), Math.max(1, guessPoints));
+        computeHighscore();
         for (Player target : getWorld().getPlayers()) {
             target.sendMessage(join(noSeparators(),
                                     player.displayName(),
@@ -431,5 +441,9 @@ public final class State {
 
     boolean isEligible(Player player) {
         return player.isValid() && player.getWorld().equals(getWorld()) && player.getGameMode() != GameMode.SPECTATOR;
+    }
+
+    protected void computeHighscore() {
+        highscore = Highscore.of(scores);
     }
 }

@@ -8,7 +8,7 @@ api-version: 1.18
 author: StarTux
 website: https://github.com/StarTux/Pictionary
 
-depend: [Core, Chat, WorldEdit, Sidebar]
+depend: [Core, PlayerCache, Mytems, Chat, WorldEdit, Sidebar, Fam]
 softdepend: []
 
 commands:

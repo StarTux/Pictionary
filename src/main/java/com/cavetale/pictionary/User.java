@@ -7,7 +7,6 @@ import org.bukkit.entity.Player;
 public final class User {
     final UUID uuid;
     String name;
-    int score;
     long lastDrawTime;
 
     public User(final UUID uuid, final String name) {

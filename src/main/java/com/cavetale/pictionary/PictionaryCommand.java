@@ -1,19 +1,23 @@
 package com.cavetale.pictionary;
 
+import com.cavetale.core.command.CommandArgCompleter;
 import com.cavetale.core.command.CommandContext;
 import com.cavetale.core.command.CommandNode;
 import com.cavetale.core.command.CommandWarn;
+import com.cavetale.fam.trophy.Highscore;
+import com.cavetale.mytems.item.trophy.TrophyCategory;
+import com.winthier.playercache.PlayerCache;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @RequiredArgsConstructor
 public final class PictionaryCommand implements TabExecutor {
@@ -37,6 +41,11 @@ public final class PictionaryCommand implements TabExecutor {
         root.addChild("clearscores")
             .caller(this::clearScores)
             .description("Clear all scores");
+        root.addChild("addscore")
+            .description("Manipulate score")
+            .completers(PlayerCache.NAME_COMPLETER,
+                        CommandArgCompleter.integer(i -> i != 0))
+            .senderCaller(this::addScore);
         root.addChild("scores")
             .caller(this::scores)
             .description("List scores");
@@ -56,6 +65,9 @@ public final class PictionaryCommand implements TabExecutor {
             .caller(this::event)
             .completableList(List.of("true", "false"))
             .description("Set event mode");
+        root.addChild("reward").denyTabCompletion()
+            .description("Reward players")
+            .senderCaller(this::reward);
         plugin.getCommand("pictionary").setExecutor(this);
     }
 
@@ -118,7 +130,7 @@ public final class PictionaryCommand implements TabExecutor {
     boolean scores(CommandContext context, CommandNode node, String[] args) {
         World world = plugin.state.getWorld();
         for (Player target : world.getPlayers()) {
-            context.message(target.getName() + ": " + plugin.state.userOf(target).score);
+            context.message(target.getName() + ": " + plugin.state.getScore(target.getUniqueId()));
         }
         return true;
     }
@@ -163,8 +175,29 @@ public final class PictionaryCommand implements TabExecutor {
             }
             plugin.save();
         }
-        context.message(Component.text("Event mode: " + plugin.state.event,
-                                       NamedTextColor.YELLOW));
+        context.message(text("Event mode: " + plugin.state.event, YELLOW));
+        return true;
+    }
+
+    private void reward(CommandSender sender) {
+        int count = Highscore.reward(plugin.state.scores,
+                                     "cavepaint",
+                                     TrophyCategory.CAVEPAINT,
+                                     plugin.TITLE,
+                                     hi -> {
+                                         int score = plugin.state.getScore(hi.uuid);
+                                         return "You earned " + score + " point" + (score == 1 ? "" : "s");
+                                     });
+        sender.sendMessage(text("Rewarded " + count + " players", AQUA));
+    }
+
+    private boolean addScore(CommandSender sender, String[] args) {
+        if (args.length != 2) return false;
+        PlayerCache target = PlayerCache.require(args[0]);
+        int value = CommandArgCompleter.requireInt(args[1], i -> i != 0);
+        plugin.state.addScore(target.uuid, value);
+        plugin.state.computeHighscore();
+        sender.sendMessage(text("Score of " + target.name + " manipulated by " + value, AQUA));
         return true;
     }
 }
