@@ -1,5 +1,7 @@
 package com.cavetale.pictionary;
 
+import com.cavetale.core.struct.Cuboid;
+import com.cavetale.core.struct.Vec3i;
 import com.cavetale.fam.trophy.Highscore;
 import com.destroystokyo.paper.MaterialTags;
 import java.time.Duration;

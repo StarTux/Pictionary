@@ -1,8 +1,8 @@
 package com.cavetale.pictionary;
 
+import com.cavetale.core.event.hud.PlayerHudEvent;
+import com.cavetale.core.event.hud.PlayerHudPriority;
 import com.cavetale.fam.trophy.Highscore;
-import com.cavetale.sidebar.PlayerSidebarEvent;
-import com.cavetale.sidebar.Priority;
 import com.winthier.chat.event.ChatPlayerTalkEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,7 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerSidebar(PlayerSidebarEvent event) {
+    public void onPlayerHud(PlayerHudEvent event) {
         if (plugin.state.phase == State.Phase.IDLE) return;
         Player player = event.getPlayer();
         if (!plugin.state.isIn(player.getWorld())) return;
@@ -76,7 +76,7 @@ public final class EventListener implements Listener {
                                  ? text("" + plugin.state.getScore(player.getUniqueId()) + "\u2714", GREEN)
                                  : text("" + plugin.state.getScore(player.getUniqueId()), WHITE))));
         lines.addAll(Highscore.sidebar(Highscore.of(plugin.state.scores)));
-        event.add(plugin, Priority.HIGHEST, lines);
+        event.sidebar(PlayerHudPriority.HIGHEST, lines);
     }
 
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)

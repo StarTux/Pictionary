@@ -47,18 +47,6 @@
       <url>https://papermc.io/repo/repository/maven-public/</url>
     </repository>
 
-    <!-- WorldEdit Repo -->
-    <repository>
-      <id>sk89q-snapshots</id>
-      <url>http://maven.sk89q.com/artifactory/repo</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-
   </repositories>
   <dependencies>
 
@@ -66,7 +54,7 @@
     <dependency>
       <groupId>io.papermc.paper</groupId>
       <artifactId>paper-api</artifactId>
-      <version>1.18.2-R0.1-SNAPSHOT</version>
+      <version>1.19.1-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
 
@@ -75,14 +63,6 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>1.18.20</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- WorldEdit -->
-    <dependency>
-      <groupId>com.sk89q.worldedit</groupId>
-      <artifactId>worldedit-bukkit</artifactId>
-      <version>7.3.0-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
 
@@ -106,22 +86,6 @@
     <dependency>
       <groupId>com.cavetale.fam</groupId>
       <artifactId>fam</artifactId>
-      <version>0.1-SNAPSHOT</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- PlayerCache -->
-    <dependency>
-      <groupId>com.winthier.playercache</groupId>
-      <artifactId>playercache</artifactId>
-      <version>0.1-SNAPSHOT</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- Sidebar -->
-    <dependency>
-      <groupId>com.cavetale.sidebar</groupId>
-      <artifactId>sidebar</artifactId>
       <version>0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>

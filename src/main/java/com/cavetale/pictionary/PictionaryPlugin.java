@@ -1,6 +1,7 @@
 package com.cavetale.pictionary;
 
 import com.cavetale.core.font.VanillaItems;
+import com.cavetale.core.util.Json;
 import com.cavetale.mytems.Mytems;
 import java.io.BufferedReader;
 import java.io.File;
