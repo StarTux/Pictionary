@@ -420,7 +420,7 @@ public final class State {
         }
         addScore(player.getUniqueId(), Math.max(1, guessPoints));
         Player drawer = getDrawer();
-        addScore(drawer.getUniqueId(), Math.max(1, guessPoints));
+        addScore(drawer.getUniqueId(), 1);
         computeHighscore();
         for (Player target : getWorld().getPlayers()) {
             target.sendMessage(join(noSeparators(),
