@@ -98,8 +98,15 @@ public final class EventListener implements Listener {
     public void onChatPlayerTalk(ChatPlayerTalkEvent event) {
         String msg = event.getMessage();
         Player player = event.getPlayer();
-        if (plugin.state.onGuess(plugin, player, msg)) {
+        if (!plugin.state.onGuess(plugin, player, msg)) return;
+        final int idx = msg.toLowerCase().indexOf(plugin.state.secretPhrase.toLowerCase());
+        if (idx < 0) {
             event.setMessage(plugin.state.publicPhrase.replace("_", "*"));
+        } else {
+            String newMessage = msg.substring(0, idx)
+                + plugin.state.publicPhrase.replace("_", "*")
+                + msg.substring(idx + plugin.state.publicPhrase.length());
+            event.setMessage(newMessage);
         }
     }
 }

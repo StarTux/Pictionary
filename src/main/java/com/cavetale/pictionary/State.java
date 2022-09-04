@@ -380,7 +380,8 @@ public final class State {
 
     public boolean onGuess(PictionaryPlugin plugin, Player player, String msg) {
         if (msg == null) return false;
-        if (!msg.equalsIgnoreCase(secretPhrase)) return false;
+        if (phase != Phase.PLAY) return false;
+        if (!msg.toLowerCase().contains(secretPhrase.toLowerCase())) return false;
         plugin.getServer().getScheduler().runTask(plugin, () -> guessCallback(plugin, player, msg));
         return true;
     }
@@ -394,7 +395,7 @@ public final class State {
     }
 
     protected void guessCallback(PictionaryPlugin plugin, Player player, String msg) {
-        if (!msg.equalsIgnoreCase(secretPhrase)) return;
+        if (!msg.toLowerCase().contains(secretPhrase.toLowerCase())) return;
         if (!isIn(player.getWorld())) return;
         if (phase != State.Phase.PLAY) return;
         if (isDrawer(player)) return;
