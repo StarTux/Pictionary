@@ -3,6 +3,7 @@ package com.cavetale.pictionary;
 import com.cavetale.core.struct.Cuboid;
 import com.cavetale.core.struct.Vec3i;
 import com.cavetale.fam.trophy.Highscore;
+import com.cavetale.mytems.Mytems;
 import com.destroystokyo.paper.MaterialTags;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -63,7 +64,8 @@ public final class State {
     protected transient BossBar bossBar;
     protected int ticksPerReveal = 500;
     protected boolean event;
-    protected transient List<Highscore> highscore;
+    protected transient List<Highscore> highscore = List.of();
+    protected transient List<Component> highscoreLines = List.of();
 
     public enum Phase {
         IDLE,
@@ -260,22 +262,26 @@ public final class State {
             target.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 0.2f, 2.0f);
         }
         if (drawer.getGameMode() == GameMode.CREATIVE) {
-            drawer.getInventory().setItem(0, new ItemStack(Material.BLACK_DYE));
-            drawer.getInventory().setItem(1, new ItemStack(Material.WHITE_DYE));
-            drawer.getInventory().setItem(2, new ItemStack(Material.RED_DYE));
-            drawer.getInventory().setItem(3, new ItemStack(Material.LIME_DYE));
-            drawer.getInventory().setItem(4, new ItemStack(Material.LIGHT_BLUE_DYE));
-            drawer.getInventory().setItem(5, new ItemStack(Material.YELLOW_DYE));
-            drawer.getInventory().setItem(6, new ItemStack(Material.ORANGE_DYE));
-            drawer.getInventory().setItem(7, new ItemStack(Material.PURPLE_DYE));
-            drawer.getInventory().setItem(8, new ItemStack(Material.PINK_DYE));
-            drawer.getInventory().setItem(9, new ItemStack(Material.LIGHT_GRAY_DYE));
-            drawer.getInventory().setItem(10, new ItemStack(Material.GRAY_DYE));
-            drawer.getInventory().setItem(11, new ItemStack(Material.GREEN_DYE));
-            drawer.getInventory().setItem(12, new ItemStack(Material.BROWN_DYE));
-            drawer.getInventory().setItem(13, new ItemStack(Material.CYAN_DYE));
-            drawer.getInventory().setItem(14, new ItemStack(Material.MAGENTA_DYE));
-            drawer.getInventory().setItem(15, new ItemStack(Material.BLUE_DYE));
+            int index = 0;
+            drawer.getInventory().setItem(index++, Mytems.BLIND_EYE.createItemStack());
+            for (Material dye : List.of(Material.BLACK_DYE,
+                                        Material.WHITE_DYE,
+                                        Material.RED_DYE,
+                                        Material.LIME_DYE,
+                                        Material.LIGHT_BLUE_DYE,
+                                        Material.YELLOW_DYE,
+                                        Material.ORANGE_DYE,
+                                        Material.PURPLE_DYE,
+                                        Material.PINK_DYE,
+                                        Material.LIGHT_GRAY_DYE,
+                                        Material.GRAY_DYE,
+                                        Material.GREEN_DYE,
+                                        Material.BROWN_DYE,
+                                        Material.CYAN_DYE,
+                                        Material.MAGENTA_DYE,
+                                        Material.BLUE_DYE)) {
+                drawer.getInventory().setItem(index++, new ItemStack(dye));
+            }
         }
         clearCanvas();
         lastDrawBlock = null;
@@ -447,5 +453,6 @@ public final class State {
 
     protected void computeHighscore() {
         highscore = Highscore.of(scores);
+        highscoreLines = Highscore.sidebar(highscore);
     }
 }

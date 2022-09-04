@@ -2,7 +2,6 @@ package com.cavetale.pictionary;
 
 import com.cavetale.core.event.hud.PlayerHudEvent;
 import com.cavetale.core.event.hud.PlayerHudPriority;
-import com.cavetale.fam.trophy.Highscore;
 import com.winthier.chat.event.ChatPlayerTalkEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +74,7 @@ public final class EventListener implements Listener {
                                 (guessedRight
                                  ? text("" + plugin.state.getScore(player.getUniqueId()) + "\u2714", GREEN)
                                  : text("" + plugin.state.getScore(player.getUniqueId()), WHITE))));
-        lines.addAll(Highscore.sidebar(Highscore.of(plugin.state.scores)));
+        lines.addAll(plugin.state.highscoreLines);
         event.sidebar(PlayerHudPriority.HIGHEST, lines);
     }
 
