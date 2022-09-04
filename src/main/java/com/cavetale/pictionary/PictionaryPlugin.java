@@ -54,16 +54,16 @@ public final class PictionaryPlugin extends JavaPlugin {
         save();
     }
 
-    void load() {
+    protected void load() {
         state = Json.load(saveFile, State.class, State::new);
         state.enable();
     }
 
-    void save() {
+    protected void save() {
         Json.save(saveFile, state, true);
     }
 
-    void tick() {
+    private void tick() {
         state.tick();
     }
 

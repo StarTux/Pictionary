@@ -18,11 +18,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -30,13 +29,11 @@ import org.bukkit.SoundCategory;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
+import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
@@ -62,6 +59,7 @@ public final class State {
     protected int ticksUntilReveal;
     protected List<String> wordList = new ArrayList<>();
     protected transient BossBar bossBar;
+    protected transient BossBar drawerBossBar;
     protected int ticksPerReveal = 500;
     protected boolean event;
     protected transient List<Highscore> highscore = List.of();
@@ -98,14 +96,7 @@ public final class State {
         return worldName.equals(world.getName());
     }
 
-    void tick() {
-        if (getWorld() == null) {
-            if (bossBar != null) {
-                bossBar.removeAll();
-                bossBar = null;
-            }
-            return;
-        }
+    protected void tick() {
         switch (phase) {
         case IDLE: return;
         case PLAY: tickPlay(); break;
@@ -114,19 +105,16 @@ public final class State {
         }
     }
 
-    void tickPlay() {
+    private void tickPlay() {
         if (bossBar == null) {
-            bossBar = Bukkit.createBossBar(ChatColor.WHITE + publicPhrase, BarColor.PURPLE, BarStyle.SOLID);
+            bossBar = BossBar.bossBar(empty(), 1.0f, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS);
         } else {
-            bossBar.setTitle(ChatColor.WHITE + publicPhrase);
+            bossBar.name(text(publicPhrase, WHITE));
         }
-        for (Player player : getWorld().getPlayers()) {
-            bossBar.addPlayer(player);
-        }
-        for (Player player : bossBar.getPlayers()) {
-            if (!player.isValid() || !player.getWorld().equals(getWorld())) {
-                bossBar.removePlayer(player);
-            }
+        if (drawerBossBar == null) {
+            drawerBossBar = BossBar.bossBar(empty(), 1.0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
+        } else {
+            drawerBossBar.name(text(secretPhrase, YELLOW));
         }
         if (playTicks > 0) {
             if (ticksUntilReveal > 0) {
@@ -138,11 +126,6 @@ public final class State {
         }
         if (playTicks % 10 == 0) {
             Player drawer = getDrawer();
-            if (drawer != null) {
-                drawer.sendActionBar(Component.join(JoinConfiguration.noSeparators(),
-                                                    text("Secret: ", GRAY),
-                                                    text(secretPhrase, WHITE)));
-            }
         }
         if (ticksLeft <= 0 || getDrawer() == null) {
             for (Player target : getWorld().getPlayers()) {
@@ -171,16 +154,17 @@ public final class State {
             }
         }
         if (totalTimeInTicks > 0) {
-            double progress = totalTimeInTicks > 0
-                ? (double) ticksLeft / (double) totalTimeInTicks
-                : 0;
-            bossBar.setProgress(Math.min(1, Math.max(0, progress)));
+            float progress = totalTimeInTicks > 0
+                ? (float) ticksLeft / (float) totalTimeInTicks
+                : 0.0f;
+            bossBar.progress(Math.min(1.0f, Math.max(0.0f, progress)));
+            drawerBossBar.progress(Math.min(1.0f, Math.max(0.0f, progress)));
         }
         ticksLeft -= 1;
         playTicks += 1;
     }
 
-    void tickEnd() {
+    private void tickEnd() {
         endTicks += 1;
         if (endTicks >= 400) {
             startNewGame();
@@ -188,7 +172,7 @@ public final class State {
         }
     }
 
-    void startNewGame() {
+    protected void startNewGame() {
         Random random = ThreadLocalRandom.current();
         List<Player> eligible = getEligiblePlayers();
         if (eligible.isEmpty()) return;
@@ -202,7 +186,7 @@ public final class State {
         startGame(player);
     }
 
-    void solveOneLetter() {
+    private void solveOneLetter() {
         Random random = ThreadLocalRandom.current();
         int index = -1;
         int found = 0;
@@ -230,7 +214,7 @@ public final class State {
         return player.getUniqueId().equals(drawerUuid);
     }
 
-    void startGame(Player player) {
+    protected void startGame(Player player) {
         Random random = ThreadLocalRandom.current();
         if (wordList.isEmpty()) {
             wordList = PictionaryPlugin.instance.getWordList();
@@ -241,7 +225,7 @@ public final class State {
         startGame(player, word);
     }
 
-    void startGame(Player drawer, String phrase) {
+    protected void startGame(Player drawer, String phrase) {
         PictionaryPlugin.instance.getLogger().info("New drawer: " + drawer.getName() + ", " + phrase);
         userOf(drawer).lastDrawTime = System.currentTimeMillis(); // create
         drawerUuid = drawer.getUniqueId();
@@ -326,9 +310,7 @@ public final class State {
         phase = Phase.IDLE;
     }
 
-    public void cleanUp() {
-        if (bossBar != null) bossBar.removeAll();
-    }
+    public void cleanUp() { }
 
     public void clearCanvas() {
         World world = getWorld();
