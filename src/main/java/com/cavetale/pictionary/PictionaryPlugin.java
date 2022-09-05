@@ -21,6 +21,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 public final class PictionaryPlugin extends JavaPlugin {
     protected static PictionaryPlugin instance;
     private PictionaryCommand pictionaryCommand = new PictionaryCommand(this);
+    private CavepaintCommand cavepaintCommand = new CavepaintCommand(this);
     private EventListener eventListener = new EventListener(this);
     State state; // loaded onEnable
     private File saveFile; // created onEnable
@@ -43,6 +44,7 @@ public final class PictionaryPlugin extends JavaPlugin {
         getDataFolder().mkdirs();
         saveFile = new File(getDataFolder(), "state.json");
         pictionaryCommand.enable();
+        cavepaintCommand.enable();
         eventListener.enable();
         load();
         getServer().getScheduler().runTaskTimer(this, this::tick, 1, 1);

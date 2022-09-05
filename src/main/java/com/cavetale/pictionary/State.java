@@ -17,7 +17,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
@@ -31,13 +30,20 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
+import static com.cavetale.core.font.Unicode.tiny;
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
+import static net.kyori.adventure.text.JoinConfiguration.separator;
+import static net.kyori.adventure.text.event.ClickEvent.runCommand;
+import static net.kyori.adventure.text.event.HoverEvent.showText;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 public final class State {
     public static final int TICKS_PER_LETTER = 300;
@@ -47,6 +53,7 @@ public final class State {
     protected Map<UUID, Integer> scores = new HashMap<>();
     protected Set<UUID> guessedRight = new HashSet<>();
     protected Phase phase = Phase.IDLE;
+    protected int pickTicks = 0;
     protected int playTicks = 0;
     protected int endTicks = 0;
     protected String secretPhrase = "";
@@ -58,18 +65,13 @@ public final class State {
     protected int ticksLeft;
     protected int ticksUntilReveal;
     protected List<String> wordList = new ArrayList<>();
+    protected List<String> wordChoices = new ArrayList<>();
     protected transient BossBar bossBar;
     protected transient BossBar drawerBossBar;
     protected int ticksPerReveal = 500;
     protected boolean event;
     protected transient List<Highscore> highscore = List.of();
     protected transient List<Component> highscoreLines = List.of();
-
-    public enum Phase {
-        IDLE,
-        PLAY,
-        END;
-    }
 
     protected void enable() {
         computeHighscore();
@@ -97,25 +99,40 @@ public final class State {
     }
 
     protected void tick() {
+        if (getWorld() == null) return;
+        if (bossBar == null) {
+            bossBar = BossBar.bossBar(empty(), 1.0f, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS);
+        }
+        if (drawerBossBar == null) {
+            drawerBossBar = BossBar.bossBar(empty(), 1.0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
+        }
         switch (phase) {
         case IDLE: return;
+        case PICK: tickPick(); break;
         case PLAY: tickPlay(); break;
         case END: tickEnd(); break;
         default: break;
         }
     }
 
+    private void tickPick() {
+        bossBar.name(text("Getting Ready", GRAY));
+        drawerBossBar.name(text("Pick a Word", YELLOW, BOLD));
+        final int totalTicks = 20 * 20;
+        final int remainingTicks = totalTicks - pickTicks;
+        if (remainingTicks < 0) {
+            startNewGame();
+            return;
+        }
+        final float progress = Math.max(0.0f, Math.min(1.0f, (float) remainingTicks / (float) totalTicks));
+        bossBar.progress(progress);
+        drawerBossBar.progress(progress);
+        pickTicks += 1;
+    }
+
     private void tickPlay() {
-        if (bossBar == null) {
-            bossBar = BossBar.bossBar(empty(), 1.0f, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS);
-        } else {
-            bossBar.name(text(publicPhrase, WHITE));
-        }
-        if (drawerBossBar == null) {
-            drawerBossBar = BossBar.bossBar(empty(), 1.0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
-        } else {
-            drawerBossBar.name(text(secretPhrase, YELLOW));
-        }
+        bossBar.name(text(publicPhrase, WHITE));
+        drawerBossBar.name(join(noSeparators(), text(tiny("draw this: "), GRAY), text(secretPhrase, YELLOW)));
         if (playTicks > 0) {
             if (ticksUntilReveal > 0) {
                 ticksUntilReveal -= 1;
@@ -214,17 +231,61 @@ public final class State {
         return player.getUniqueId().equals(drawerUuid);
     }
 
+    /**
+     * Prepare and enter the PICK phase.
+     */
     protected void startGame(Player player) {
         Random random = ThreadLocalRandom.current();
-        if (wordList.isEmpty()) {
-            wordList = PictionaryPlugin.instance.getWordList();
-            Collections.shuffle(wordList);
-            PictionaryPlugin.instance.getLogger().info(wordList.size() + " words loaded from disk");
+        wordChoices = new ArrayList<>();
+        for (int i = 0; i < 3; i += 1) {
+            if (wordList.isEmpty()) {
+                wordList = PictionaryPlugin.instance.getWordList();
+                Collections.shuffle(wordList);
+                PictionaryPlugin.instance.getLogger().info(wordList.size() + " words loaded from disk");
+            }
+            wordChoices.add(wordList.remove(wordList.size() - 1));
         }
-        String word = wordList.remove(0);
-        startGame(player, word);
+        drawerUuid = player.getUniqueId();
+        phase = Phase.PICK;
+        pickTicks = 0;
+        openPickBook(player);
     }
 
+    protected void openPickBook(Player player) {
+        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+        book.editMeta(m -> {
+                if (m instanceof BookMeta meta) {
+                    meta.author(text("Cavetale"));
+                    meta.title(text("Cavepaint"));
+                    List<Component> lines = new ArrayList<>();
+                    lines.add(text("Choose a Phrase to Draw", DARK_BLUE));
+                    int i = 0;
+                    for (String word : wordChoices) {
+                        final int index = i++;
+                        lines.add(empty());
+                        lines.add(join(noSeparators(), text((index + 1) + ") ", GRAY), text(word, BLUE, UNDERLINED))
+                                  .hoverEvent(showText(text(word, GRAY)))
+                                  .clickEvent(runCommand("/cavepaint word " + index)));
+                    }
+                    meta.pages(List.of(join(separator(newline()), lines)));
+                }
+            });
+        player.openBook(book);
+        player.sendMessage(text("Please pick a word. Click here if you closed the book by accident", GREEN, BOLD)
+                           .hoverEvent(showText(text("Choose a Phrase to Draw", GRAY)))
+                           .clickEvent(runCommand("/cavepaint open")));
+    }
+
+    protected void pickWord(Player player, int index) {
+        if (phase != Phase.PICK || !isDrawer(player) || index < 0 || index >= wordChoices.size()) {
+            return;
+        }
+        startGame(player, wordChoices.get(index));
+    }
+
+    /**
+     * Switch to the PLAY phase and load the word.
+     */
     protected void startGame(Player drawer, String phrase) {
         PictionaryPlugin.instance.getLogger().info("New drawer: " + drawer.getName() + ", " + phrase);
         userOf(drawer).lastDrawTime = System.currentTimeMillis(); // create
@@ -397,7 +458,7 @@ public final class State {
     protected void guessCallback(PictionaryPlugin plugin, Player player, String msg) {
         if (!msg.toLowerCase().contains(secretPhrase.toLowerCase())) return;
         if (!isIn(player.getWorld())) return;
-        if (phase != State.Phase.PLAY) return;
+        if (phase != Phase.PLAY) return;
         if (isDrawer(player)) return;
         // Guessed right!
         if (guessedRight.contains(player.getUniqueId())) return;
@@ -424,14 +485,14 @@ public final class State {
         }
     }
 
-    List<Player> getEligiblePlayers() {
-        return getWorld().getPlayers().stream()
-            .filter(p -> p.getGameMode() != GameMode.SPECTATOR)
-            .collect(Collectors.toList());
-    }
-
-    boolean isEligible(Player player) {
-        return player.isValid() && player.getWorld().equals(getWorld()) && player.getGameMode() != GameMode.SPECTATOR;
+    private List<Player> getEligiblePlayers() {
+        List<Player> result = new ArrayList<>();
+        for (Player player : getWorld().getPlayers()) {
+            if (player.getGameMode() == GameMode.SPECTATOR) continue;
+            if (!player.hasPermission("cavepaint.player")) continue;
+            result.add(player);
+        }
+        return result;
     }
 
     protected void computeHighscore() {

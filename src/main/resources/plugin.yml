@@ -14,14 +14,23 @@ softdepend: []
 commands:
 
   pictionary:
-    aliases: [cavepaint]
-    description: Pictionary Command
-    permission: pictionary.pictionary
+    aliases: [cavepaintadmin, cavepaintadm]
+    description: Admin Command
+    permission: cavepaint.admin
     usage: |-
       /pictionary
 
+  cavepaint:
+    aliases: []
+    description: User Command
+    permission: 
+
 permissions:
 
-  pictionary.pictionary:
+  cavepaint.admin:
     description: Use /pictionary
+    default: op
+
+  cavepaint.player:
+    description: Use /cavepaint
     default: op

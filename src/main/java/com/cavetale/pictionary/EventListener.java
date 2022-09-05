@@ -13,7 +13,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
-import static com.cavetale.core.font.Unicode.tiny;
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
@@ -48,7 +47,7 @@ public final class EventListener implements Listener {
 
     @EventHandler
     public void onPlayerHud(PlayerHudEvent event) {
-        if (plugin.state.phase == State.Phase.IDLE) return;
+        if (plugin.state.phase == Phase.IDLE) return;
         Player player = event.getPlayer();
         if (!plugin.state.isIn(player.getWorld())) return;
         List<Component> lines = new ArrayList<>();
@@ -64,9 +63,6 @@ public final class EventListener implements Listener {
                 lines.add(join(noSeparators(),
                                Mytems.MOUSE_RIGHT,
                                text(" Fine strokes", GRAY)));
-                lines.add(empty());
-                lines.add(join(noSeparators(), text(tiny("secret "), GRAY),
-                               text(plugin.state.secretPhrase, YELLOW)));
                 lines.add(empty());
             }
             lines.add(text()
