@@ -236,6 +236,7 @@ public final class State {
      * Prepare and enter the PICK phase.
      */
     protected void startGame(Player player) {
+        player.playSound(player.getLocation(), Sound.ENTITY_GHAST_SCREAM, SoundCategory.MASTER, 1.5f, 1.5f);
         userOf(player).lastDrawTime = System.currentTimeMillis();
         Random random = ThreadLocalRandom.current();
         wordChoices = new ArrayList<>();
@@ -307,11 +308,7 @@ public final class State {
                                .append(drawer.displayName())
                                .append(text("'s turn!\n"))
                                .color(GREEN));
-            if (target.equals(drawer)) {
-                target.playSound(target.getLocation(), Sound.ENTITY_GHAST_SCREAM, SoundCategory.MASTER, 1.5f, 1.5f);
-            } else {
-                target.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 0.2f, 2.0f);
-            }
+            target.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 0.2f, 2.0f);
         }
         if (drawer.getGameMode() == GameMode.CREATIVE) {
             int index = 0;
