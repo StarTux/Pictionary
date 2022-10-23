@@ -34,6 +34,7 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 import static com.cavetale.core.font.Unicode.tiny;
+import static com.cavetale.core.util.CamelCase.toCamelCase;
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
@@ -243,7 +244,9 @@ public final class State {
                 Collections.shuffle(wordList);
                 PictionaryPlugin.instance.getLogger().info(wordList.size() + " words loaded from disk");
             }
-            wordChoices.add(wordList.remove(wordList.size() - 1));
+            String phrase = wordList.remove(wordList.size() - 1);
+            phrase = toCamelCase(" ", List.of(phrase.split(" ")));
+            wordChoices.add(phrase);
         }
         drawerUuid = player.getUniqueId();
         phase = Phase.PICK;
