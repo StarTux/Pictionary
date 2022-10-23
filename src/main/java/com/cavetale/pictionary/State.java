@@ -236,6 +236,7 @@ public final class State {
      * Prepare and enter the PICK phase.
      */
     protected void startGame(Player player) {
+        userOf(player).lastDrawTime = System.currentTimeMillis();
         Random random = ThreadLocalRandom.current();
         wordChoices = new ArrayList<>();
         for (int i = 0; i < 3; i += 1) {
@@ -291,7 +292,6 @@ public final class State {
      */
     protected void startGame(Player drawer, String phrase) {
         PictionaryPlugin.instance.getLogger().info("New drawer: " + drawer.getName() + ", " + phrase);
-        userOf(drawer).lastDrawTime = System.currentTimeMillis(); // create
         drawerUuid = drawer.getUniqueId();
         phase = Phase.PLAY;
         playTicks = 0;
