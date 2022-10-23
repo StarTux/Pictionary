@@ -307,7 +307,11 @@ public final class State {
                                .append(drawer.displayName())
                                .append(text("'s turn!\n"))
                                .color(GREEN));
-            target.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 0.2f, 2.0f);
+            if (target.equals(drawer)) {
+                target.playSound(target.getLocation(), Sound.ENTITY_GHAST_SCREAM, SoundCategory.MASTER, 1.5f, 1.5f);
+            } else {
+                target.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 0.2f, 2.0f);
+            }
         }
         if (drawer.getGameMode() == GameMode.CREATIVE) {
             int index = 0;
