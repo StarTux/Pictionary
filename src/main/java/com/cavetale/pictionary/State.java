@@ -48,7 +48,7 @@ import static net.kyori.adventure.text.format.TextDecoration.*;
 
 public final class State {
     public static final int TICKS_PER_LETTER = 20 * 20;
-    public static final int WARM_UP_TICKS = 20 * 60;
+    public static final int WARM_UP_TICKS = 20 * 90;
     protected String worldName = "";
     protected Cuboid canvas = Cuboid.ZERO;
     protected Map<UUID, User> users = new HashMap<>();
