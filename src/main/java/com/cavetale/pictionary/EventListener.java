@@ -14,16 +14,15 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import static net.kyori.adventure.text.Component.empty;
-import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
+import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @RequiredArgsConstructor
 public final class EventListener implements Listener {
     private final PictionaryPlugin plugin;
 
-    void enable() {
+    protected void enable() {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -42,7 +41,7 @@ public final class EventListener implements Listener {
         Player player = event.getPlayer();
         if (!plugin.state.isIn(player.getWorld())) return;
         if (!plugin.state.isDrawer(player)) return;
-        plugin.state.draw(player, left);
+        plugin.state.draw(player, left, player.isSneaking());
     }
 
     @EventHandler
@@ -54,15 +53,12 @@ public final class EventListener implements Listener {
         Player drawer = plugin.state.getDrawer();
         if (drawer != null) {
             if (player.equals(drawer)) {
-                lines.add(join(noSeparators(), text("Your turn!", YELLOW), text(" To draw,", GRAY)));
+                lines.add(textOfChildren(text("Your turn!", YELLOW), text(" To draw,", GRAY)));
                 lines.add(text("hold a dye and face", GRAY));
                 lines.add(text("the canvas", GRAY));
-                lines.add(join(noSeparators(),
-                               Mytems.MOUSE_LEFT,
-                               text(" Broad strokes", GRAY)));
-                lines.add(join(noSeparators(),
-                               Mytems.MOUSE_RIGHT,
-                               text(" Fine strokes", GRAY)));
+                lines.add(textOfChildren(Mytems.MOUSE_RIGHT, text(" Fine strokes", GRAY)));
+                lines.add(textOfChildren(Mytems.MOUSE_LEFT, text(" Broad strokes", GRAY)));
+                lines.add(textOfChildren(Mytems.SHIFT_KEY, Mytems.MOUSE_LEFT, text(" Fill", GRAY)));
                 lines.add(empty());
             }
             lines.add(text()
@@ -72,11 +68,10 @@ public final class EventListener implements Listener {
                      .build());
         }
         boolean guessedRight = plugin.state.guessedRight.contains(player.getUniqueId());
-        lines.add(Component.join(noSeparators(),
-                                text("Your Score ", GRAY),
-                                (guessedRight
-                                 ? text("" + plugin.state.getScore(player.getUniqueId()) + "\u2714", GREEN)
-                                 : text("" + plugin.state.getScore(player.getUniqueId()), WHITE))));
+        lines.add(textOfChildren(text("Your Score ", GRAY),
+                                 (guessedRight
+                                  ? text("" + plugin.state.getScore(player.getUniqueId()) + "\u2714", GREEN)
+                                  : text("" + plugin.state.getScore(player.getUniqueId()), WHITE))));
         lines.addAll(plugin.state.highscoreLines);
         event.sidebar(PlayerHudPriority.HIGHEST, lines);
         if (player.equals(drawer)) {

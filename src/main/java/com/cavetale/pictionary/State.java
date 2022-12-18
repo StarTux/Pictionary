@@ -391,7 +391,7 @@ public final class State {
         }
     }
 
-    protected void draw(Player player, boolean thick) {
+    protected void draw(Player player, boolean thick, boolean fill) {
         Block block = player.getTargetBlock(100);
         if (block == null) return;
         if (!canvas.contains(block)) return;
@@ -406,6 +406,10 @@ public final class State {
         try {
             to = Material.valueOf(name + "_CONCRETE");
         } catch (IllegalArgumentException iae) {
+            return;
+        }
+        if (thick && fill) {
+            fill(player, block, block.getType(), to);
             return;
         }
         long now = System.currentTimeMillis();
@@ -441,6 +445,19 @@ public final class State {
                 }
             }
         }
+    }
+
+    private void fill(Player player, Block block, Material from, Material to) {
+        if (from == to) return;
+        if (!canvas.contains(block)) return;
+        if (block.getType() != from) return;
+        block.setType(to, false);
+        fill(player, block.getRelative(1, 0, 0), from, to);
+        fill(player, block.getRelative(-1, 0, 0), from, to);
+        fill(player, block.getRelative(0, 1, 0), from, to);
+        fill(player, block.getRelative(0, -1, 0), from, to);
+        fill(player, block.getRelative(0, 0, 1), from, to);
+        fill(player, block.getRelative(0, 0, -1), from, to);
     }
 
     public boolean onGuess(PictionaryPlugin plugin, Player player, String msg) {
