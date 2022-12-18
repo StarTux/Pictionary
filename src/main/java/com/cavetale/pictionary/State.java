@@ -47,7 +47,8 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
 public final class State {
-    public static final int TICKS_PER_LETTER = 300;
+    public static final int TICKS_PER_LETTER = 20 * 30;
+    public static final int WARM_UP_TICKS = 20 * 60;
     protected String worldName = "";
     protected Cuboid canvas = Cuboid.ZERO;
     protected Map<UUID, User> users = new HashMap<>();
@@ -339,9 +340,8 @@ public final class State {
         final int phraseLength = phrase.replace(" ", "").length();
         totalTimeInTicks = Math.min(15, phraseLength) * TICKS_PER_LETTER;
         ticksPerReveal = totalTimeInTicks / phraseLength;
-        int warmupTicks = 600;
-        totalTimeInTicks += warmupTicks;
-        ticksUntilReveal = ticksPerReveal + warmupTicks;
+        totalTimeInTicks += WARM_UP_TICKS;
+        ticksUntilReveal = ticksPerReveal + WARM_UP_TICKS;
         ticksLeft = totalTimeInTicks + 20;
         guessedRight.clear();
     }
