@@ -61,6 +61,7 @@ public final class State {
     protected String publicPhrase = "";
     protected UUID drawerUuid = null;
     protected long lastDrawTime = 0;
+    protected long lastSoundTime = 0;
     protected Vec3i lastDrawBlock = null;
     protected int totalTimeInTicks;
     protected int ticksLeft;
@@ -410,11 +411,15 @@ public final class State {
         }
         if (thick && fill) {
             fill(player, block, block.getType(), to);
+            player.playSound(player.getLocation(), Sound.ENTITY_DOLPHIN_SPLASH, SoundCategory.MASTER, 0.5f, 1.3f);
+            lastDrawTime = 0;
+            lastDrawBlock = null;
             return;
         }
         long now = System.currentTimeMillis();
         long diff = (now - lastDrawTime);
-        if (diff < 400L && lastDrawBlock != null) {
+        boolean doDrawLine = diff < 300L && lastDrawBlock != null;
+        if (doDrawLine) {
             Vector dir = new Vector(lastDrawBlock.x - block.getX(),
                                     lastDrawBlock.y - block.getY(),
                                     lastDrawBlock.z - block.getZ());
@@ -429,8 +434,17 @@ public final class State {
         } else {
             draw(player, block, to, thick);
         }
+        Vec3i newDrawnBlock = Vec3i.of(block);
+        if (now - lastSoundTime > 1000L) {
+            lastSoundTime = now;
+            if (thick) {
+                player.playSound(player.getLocation(), Sound.BLOCK_POWDER_SNOW_STEP, SoundCategory.MASTER, 0.5f, 1.5f);
+            } else if (doDrawLine && !newDrawnBlock.equals(lastDrawBlock)) {
+                player.playSound(player.getLocation(), Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, SoundCategory.MASTER, 0.5f, 0.5f);
+            }
+        }
         lastDrawTime = now;
-        lastDrawBlock = Vec3i.of(block);
+        lastDrawBlock = newDrawnBlock;
     }
 
     private void draw(Player player, Block block, Material mat, boolean thick) {
