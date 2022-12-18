@@ -5,17 +5,15 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public final class User {
-    final UUID uuid;
-    String name;
-    long lastDrawTime;
+    protected final UUID uuid;
+    protected long lastDrawTime;
 
-    public User(final UUID uuid, final String name) {
+    public User(final UUID uuid) {
         this.uuid = uuid;
-        this.name = name;
     }
 
     public User(final Player player) {
-        this(player.getUniqueId(), player.getName());
+        this(player.getUniqueId());
     }
 
     public Player getPlayer() {

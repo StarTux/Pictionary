@@ -13,8 +13,8 @@ softdepend: []
 
 commands:
 
-  pictionary:
-    aliases: [cavepaintadmin, cavepaintadm]
+  cavepaintadmin:
+    aliases: [cavepaintadm]
     description: Admin Command
     permission: cavepaint.admin
     usage: |-

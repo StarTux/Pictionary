@@ -19,14 +19,14 @@ import org.bukkit.entity.Player;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
-public final class PictionaryCommand extends AbstractCommand<PictionaryPlugin> {
-    protected PictionaryCommand(final PictionaryPlugin plugin) {
-        super(plugin, "pictionary");
+public final class CavepaintAdminCommand extends AbstractCommand<PictionaryPlugin> {
+    protected CavepaintAdminCommand(final PictionaryPlugin plugin) {
+        super(plugin, "cavepaintadmin");
     }
 
     @Override
     protected void onEnable() {
-        rootNode.description("Pictionary Admin Interface");
+        rootNode.description("Cavepaint Admin Interface");
         rootNode.addChild("setcanvas")
             .caller(this::setcanvas)
             .description("Set the canvas");
