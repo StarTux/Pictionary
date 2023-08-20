@@ -46,7 +46,7 @@ public final class EventListener implements Listener {
 
     @EventHandler
     public void onPlayerHud(PlayerHudEvent event) {
-        if (plugin.state.phase == Phase.IDLE) return;
+        if (!plugin.state.event && plugin.state.phase == Phase.IDLE) return;
         Player player = event.getPlayer();
         if (!plugin.state.isIn(player.getWorld())) return;
         List<Component> lines = new ArrayList<>();
