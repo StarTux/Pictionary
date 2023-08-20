@@ -392,29 +392,36 @@ public final class State {
         }
     }
 
-    protected void draw(Player player, boolean thick, boolean fill) {
+    /**
+     * Attempt to draw on the canvas.
+     * @param player the player
+     * @param thick whether to draw a thick line
+     * @param fill whether to fill
+     * @return true if something was drawn, false otherwise
+     */
+    protected boolean draw(Player player, boolean thick, boolean fill) {
         Block block = player.getTargetBlock(100);
-        if (block == null) return;
-        if (!canvas.contains(block)) return;
-        if (!MaterialTags.CONCRETES.isTagged(block.getType())) return;
+        if (block == null) return false;
+        if (!canvas.contains(block)) return false;
+        if (!MaterialTags.CONCRETES.isTagged(block.getType())) return false;
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item == null) return;
+        if (item == null) return false;
         Material mat = item.getType();
         String name = mat.name();
-        if (!name.endsWith("_DYE")) return;
+        if (!name.endsWith("_DYE")) return false;
         name = name.substring(0, name.length() - 4);
         Material to;
         try {
             to = Material.valueOf(name + "_CONCRETE");
         } catch (IllegalArgumentException iae) {
-            return;
+            return false;
         }
-        if (thick && fill) {
+        if (fill) {
             fill(player, block, block.getType(), to);
             player.playSound(player.getLocation(), Sound.ENTITY_DOLPHIN_SPLASH, SoundCategory.MASTER, 0.5f, 1.3f);
             lastDrawTime = 0;
             lastDrawBlock = null;
-            return;
+            return true;
         }
         long now = System.currentTimeMillis();
         long diff = (now - lastDrawTime);
@@ -445,6 +452,7 @@ public final class State {
         }
         lastDrawTime = now;
         lastDrawBlock = newDrawnBlock;
+        return true;
     }
 
     private void draw(Player player, Block block, Material mat, boolean thick) {

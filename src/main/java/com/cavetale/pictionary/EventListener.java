@@ -13,7 +13,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import static net.kyori.adventure.text.Component.empty;
+import static net.kyori.adventure.text.Component.keybind;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
@@ -27,7 +29,7 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = false, priority = EventPriority.NORMAL)
-    public void onPlayerInteract(PlayerInteractEvent event) {
+    private void onPlayerInteract(PlayerInteractEvent event) {
         boolean left = false;
         switch (event.getAction()) {
         case LEFT_CLICK_BLOCK:
@@ -41,11 +43,27 @@ public final class EventListener implements Listener {
         Player player = event.getPlayer();
         if (!plugin.state.isIn(player.getWorld())) return;
         if (!plugin.state.isDrawer(player)) return;
-        plugin.state.draw(player, left, player.isSneaking());
+        final boolean thick = left;
+        final boolean fill = false;
+        if (plugin.state.draw(player, thick, fill)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = false, priority = EventPriority.NORMAL)
+    private void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) {
+        final Player player = event.getPlayer();
+        if (!plugin.state.isIn(player.getWorld())) return;
+        if (!plugin.state.isDrawer(player)) return;
+        final boolean thick = true;
+        final boolean fill = true;
+        if (plugin.state.draw(player, thick, fill)) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler
-    public void onPlayerHud(PlayerHudEvent event) {
+    private void onPlayerHud(PlayerHudEvent event) {
         if (!plugin.state.event && plugin.state.phase == Phase.IDLE) return;
         Player player = event.getPlayer();
         if (!plugin.state.isIn(player.getWorld())) return;
@@ -58,7 +76,7 @@ public final class EventListener implements Listener {
                 lines.add(text("the canvas", GRAY));
                 lines.add(textOfChildren(Mytems.MOUSE_RIGHT, text(" Fine strokes", GRAY)));
                 lines.add(textOfChildren(Mytems.MOUSE_LEFT, text(" Broad strokes", GRAY)));
-                lines.add(textOfChildren(Mytems.SHIFT_KEY, Mytems.MOUSE_LEFT, text(" Fill", GRAY)));
+                lines.add(textOfChildren(keybind("key.swapOffhand", WHITE), text(" Fill", GRAY)));
                 lines.add(empty());
             }
             lines.add(text()
