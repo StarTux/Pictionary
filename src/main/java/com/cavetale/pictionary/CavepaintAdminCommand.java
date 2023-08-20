@@ -12,7 +12,6 @@ import com.cavetale.fam.trophy.Highscore;
 import com.cavetale.mytems.item.trophy.TrophyCategory;
 import java.util.Arrays;
 import java.util.List;
-import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -77,7 +76,7 @@ public final class CavepaintAdminCommand extends AbstractCommand<PictionaryPlugi
         Cuboid selection = Cuboid.requireSelectionOf(player);
         plugin.state.setCanvas(player.getWorld(), selection);
         plugin.save();
-        context.message(ChatColor.YELLOW + "Canvas updated: " + selection);
+        context.message(text("Canvas updated: " + selection, YELLOW));
         return true;
     }
 
