@@ -1,5 +1,6 @@
 package com.cavetale.pictionary;
 
+import com.cavetale.afk.AFKPlugin;
 import com.cavetale.core.struct.Cuboid;
 import com.cavetale.core.struct.Vec3i;
 import com.cavetale.fam.trophy.Highscore;
@@ -533,6 +534,7 @@ public final class State {
         for (Player player : getWorld().getPlayers()) {
             if (player.getGameMode() == GameMode.SPECTATOR) continue;
             if (!player.hasPermission("cavepaint.player")) continue;
+            if (AFKPlugin.isAfk(player)) continue;
             result.add(player);
         }
         return result;
