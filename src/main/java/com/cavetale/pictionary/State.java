@@ -400,7 +400,7 @@ public final class State {
      * @return true if something was drawn, false otherwise
      */
     protected boolean draw(Player player, boolean thick, boolean fill) {
-        Block block = player.getTargetBlock(100);
+        Block block = player.getTargetBlockExact(100);
         if (block == null) return false;
         if (!canvas.contains(block)) return false;
         if (!MaterialTags.CONCRETES.isTagged(block.getType())) return false;
