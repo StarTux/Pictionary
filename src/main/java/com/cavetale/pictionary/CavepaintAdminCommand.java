@@ -10,6 +10,7 @@ import com.cavetale.core.struct.Cuboid;
 import com.cavetale.core.util.Json;
 import com.cavetale.fam.trophy.Highscore;
 import com.cavetale.mytems.item.trophy.TrophyCategory;
+import com.winthier.kit.Kits;
 import java.util.Arrays;
 import java.util.List;
 import org.bukkit.World;
@@ -165,15 +166,19 @@ public final class CavepaintAdminCommand extends AbstractCommand<PictionaryPlugi
     }
 
     private void reward(CommandSender sender) {
-        int count = Highscore.reward(plugin.state.scores,
-                                     "cavepaint",
-                                     TrophyCategory.CAVEPAINT,
-                                     plugin.TITLE,
-                                     hi -> {
-                                         int score = plugin.state.getScore(hi.uuid);
-                                         return "You earned " + score + " point" + (score == 1 ? "" : "s");
-                                     });
+        int count = Highscore.reward(
+            plugin.state.scores,
+            "cavepaint",
+            TrophyCategory.CAVEPAINT,
+            plugin.TITLE,
+            hi -> {
+                int score = plugin.state.getScore(hi.uuid);
+                return "You earned " + score + " point" + (score == 1 ? "" : "s");
+            }
+        );
         sender.sendMessage(text("Rewarded " + count + " players", AQUA));
+        Highscore.rewardMoneyWithFeedback(sender, plugin, plugin.state.scores, "Cavepaint");
+        Kits.autoCreateKit(sender, "cavepaint", plugin.state.scores.keySet());
     }
 
     private boolean addScore(CommandSender sender, String[] args) {
